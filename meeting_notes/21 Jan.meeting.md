@@ -1,0 +1,51 @@
+- **Layla**
+	- jack of all trades
+- **Yu-Shin**
+	- prefers data collection
+	- ok with report writing
+	- likes direct tasks
+- **Ray**
+	- majors in financial computing
+		- unrelated to coding etc.
+	- except for coding everything is ok
+	- for the report, ray says each person should write their own part
+		- assigning one specific person means they won't 
+- **Cem**
+	- coding experience in backend and frontend
+- **Efe**
+	- some of the backend code (*Python*)
+	- interested in UI design
+	- interested in data collection
+# GCSearch Requirements
+## Core
+- CW1 Search engine implementations
+	- tokenisation etc, search capabilities
+	- copy from *everyone's* assignments
+		- take the best bits from everyone's CW1
+- some form of archive->PII indexer
+- interface matches what a group chat looks like
+	- "jump to" message etc.
+	- interface resembles
+- statistics for each chat
+- **WeChat quality at a minimum**
+	- all in one solution
+## Stretch
+- safety/encryption
+- classifier to find other related messages (sentiment, etc)
+- RAG
+	- summary of day's chats
+	- grammar checking (also contextual per person)
+		- from even a little bit of the sequence
+- *ai persona trained on data*
+- handle multiple group chats
+- live updating of archive and index
+# Immediate Tasks
+- parser for archive/export
+	- instagram \[Cem]
+	- whatsapp
+		- kaggle dataset \[Efe]
+	- messenger
+	- X (*stretch*)
+	- wechat \[YuShin, Leyla, Ray]
+- gathering CW1 submissions
+- look at other CW3's 
