@@ -23,7 +23,7 @@ time_patterns = [
     re.compile(r"(上午|下午)(\d{1,2}):(\d{2})\t(.+?)\t(.+)")        # Format: 上午/下午 HH:MM sender message
 ]
 
-# 媒體關鍵字
+# is_media keywords
 media_keywords = ["[photo]", "[video]", "[照片]", "[影片]", "[檔案]", "[file]", "[sticker]", "[貼圖]"]
 
 # save the messages
