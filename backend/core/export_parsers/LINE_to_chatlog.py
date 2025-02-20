@@ -4,8 +4,8 @@ import os
 from datetime import datetime
 
 # input file and output file
-input_file = "text/[LINE] TNXㄉ땡스們□的聊天記錄.txt"  # input file
-output_file = "chatlog_latestneeeew1.csv"  # output file path
+input_file = "LINE_chat.txt"  # input file
+output_file = "LINE_chatlog.csv"  # output file path
 
 #  the format of the input file
 chat_id_pattern = re.compile(r"\[LINE\] Chat (\d+)")  # [LINE] Chat n
