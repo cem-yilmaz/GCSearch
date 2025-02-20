@@ -54,8 +54,8 @@ def write_positional_index_to_file(index, output_path):
             f.write("\n")
 
 print("data file read")
-input_csv = "jeiba/processed_chatlog.csv"      # inpur file
-output_index_file = "jeiba/positional_inverted_index.txt"   # output file
+input_csv = "processed_chatlog.csv"      # inpur file
+output_index_file = "positional_inverted_index.txt"   # output file
 
 # building PII from input csv file
 print("PII converting")
