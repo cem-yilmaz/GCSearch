@@ -3,7 +3,7 @@ import pandas as pd
 def build_positional_inverted_index_from_csv(csv_path):
     """
     building PII from csv
-    CSV format:
+    Processed CSV format:
         doc_id, original_message, processed_tokens, tfidf_keywords, embedding_vector
     returns:
         index: dict { token: { doc_id: [pos1, pos2, ...], ... } }
