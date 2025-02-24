@@ -171,5 +171,4 @@ cython_debug/
 .pypirc
 
 # Export directory
-export/*
-!export/**/.gitkeep
+backend/core/export/**/*.zip
