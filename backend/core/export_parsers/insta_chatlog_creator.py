@@ -3,6 +3,9 @@ import zipfile
 import json
 import csv
 
+def test_func():
+    return "Hi!"
+
 class InstaChatlogCreator:
     """
     A class that creates the chatlogs and info files from a dump of Instagram data.
