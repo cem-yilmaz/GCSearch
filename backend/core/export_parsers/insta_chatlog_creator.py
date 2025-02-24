@@ -13,6 +13,8 @@ class InstaChatlogCreator:
 
     Place your exported Instagram data in a folder called `export` in the same directory as this script. Use the `main` method to generate the chatlogs and info files, which will be placed in the `out` folder.
 
+    These chatlogs will follow the naming scheme `instagram__<internal_chat_name>.chatlog.csv` and the info files will follow the naming scheme `instagram__<internal_chat_name>.info.csv`.
+
     Args:
         export_location (str): The path to the folder containing the Instagram data dump. Defaults to a folder called `export`.
     """
@@ -20,8 +22,9 @@ class InstaChatlogCreator:
         self.root_output_dir = 'out'
         self.info_output_dir = os.path.join(self.root_output_dir, 'info')
         self.chatlogs_output_dir = os.path.join(self.root_output_dir, 'chatlogs')
-        self.raw_export_archives_dir = export_location
-        self.raw_messages_dir = 'raw_messages'
+        self.raw_export_archives_dir:str = export_location
+        self.raw_messages_dir:str = 'raw_messages'
+        self.export_prefix:str = 'instagram__'
 
     def __repr__(self):
         return f"InstaChatlogCreator(export_location={self.raw_export_archives_dir}) | Will read zip archives from {self.raw_export_archives_dir}/, extract the core message data to {self.raw_messages_dir}/, and output chatlogs to {self.chatlogs_output_dir}/ and info files to {self.info_output_dir}/"
@@ -177,7 +180,7 @@ class InstaChatlogCreator:
         Creates an `info.csv` file for a chat
         """
         internal_chat_name, display_name, participants = self.get_info_about_chat(chat_name)
-        with open(os.path.join(self.info_output_dir, f'{internal_chat_name}.info.csv'), 'w') as f:
+        with open(os.path.join(self.info_output_dir, f'{self.export_prefix}.{internal_chat_name}.info.csv'), 'w') as f:
             writer = csv.writer(f)
             writer.writerow(['Internal chat name', 'Display name', 'Participants'])
             writer.writerow([internal_chat_name, display_name, '['+', '.join(participants)+']'])
@@ -230,7 +233,7 @@ class InstaChatlogCreator:
         with(open(os.path.join(self.raw_messages_dir, chat_name, 'message_1.json'), 'r')) as f:
             parsed_file = json.load(f)
             f.close()
-        with(open(os.path.join(self.chatlogs_output_dir, f'{chat_name}.chatlog.csv'), 'w')) as f:
+        with(open(os.path.join(self.chatlogs_output_dir, f'{self.export_prefix}.{chat_name}.chatlog.csv'), 'w')) as f:
             writer = csv.writer(f)
             writer.writerow(['docNo', 'time', 'sender', 'message', 'isReply', 'who_replied_to', 'has_reactions', 'reactions', 'translated', 'is_media', 'is_OCR', 'local_uri', 'remote_url']) #TODO: implement shared/forwarded posts
             for i in range(len(parsed_file['messages'])):
@@ -301,3 +304,4 @@ class InstaChatlogCreator:
         """
         self.extract_messages_folder()
         self.create_chatlogs_and_info_for_all_chats()
+        # todo: tell the user they can safely delete the raw_messages folder
