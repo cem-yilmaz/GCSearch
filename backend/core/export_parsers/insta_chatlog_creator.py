@@ -304,4 +304,4 @@ class InstaChatlogCreator:
         """
         self.extract_messages_folder()
         self.create_chatlogs_and_info_for_all_chats()
-        # todo: tell the user they can safely delete the raw_messages folder
+        #TODO: tell the user they can safely delete the raw_messages folder IF they choose not to render images
