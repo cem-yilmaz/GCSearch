@@ -5,26 +5,24 @@ import csv
 from pathlib import Path
 from ocr import OCR # This import looks silly just trust the plan
 
-report_zip_file_errors = False
-
-script_dir = os.path.dirname(__file__)
-print(f"Script directory: {script_dir}")
+report_zip_file_errors = False # disable logging when a corrupt zip is attempted to be read
+base_dir = Path(__file__).parent # used to resolve relative paths to the script
 
 class InstaChatlogCreator:
     """
     A class that creates the chatlogs and info files from a dump of Instagram data.
-    Produces a folder in the current directory titled `out`, within it containing a `chatlogs` folder and an `info` folder.
+    Produces a folder `core/out/`, within it containing a `chatlogs/` folder and an `info/` folder.
 
-    Place your exported Instagram data in a folder called `export` in the same directory as this script. Use the `main` method to generate the chatlogs and info files, which will be placed in the `out` folder.
+    Place your exported Instagram data in `export/`. Use the `main` method to generate the chatlogs and info files, which will be placed in the `out/` folder.
 
     These chatlogs will follow the naming scheme `instagram__<internal_chat_name>.chatlog.csv` and the info files will follow the naming scheme `instagram__<internal_chat_name>.info.csv`.
     """
     def __init__(self):
-        self.root_output_dir = os.path.join(script_dir, '..', 'out')
-        self.info_output_dir = os.path.join(self.root_output_dir, 'info')
-        self.chatlogs_output_dir = os.path.join(self.root_output_dir, 'chatlogs')
-        self.raw_export_archives_dir:str = os.path.join(script_dir, '..', 'export', 'instagram')
-        self.raw_messages_dir:str = os.path.join(script_dir, '..', 'insta_raw_message_data')
+        self.root_output_dir = (base_dir.parent / 'out')
+        self.info_output_dir = (self.root_output_dir / 'info')
+        self.chatlogs_output_dir = (self.root_output_dir / 'chatlogs')
+        self.raw_export_archives_dir:str = (base_dir.parent / 'export' / 'instagram') #os.path.join(script_dir, '..', 'export', 'instagram')
+        self.raw_messages_dir:str = (base_dir.parent / 'insta_raw_message_data') #os.path.join(script_dir, '..', 'insta_raw_message_data')
         self.export_prefix:str = 'instagram__'
         self.num_archives = len(self.zips_in_dir(self.raw_export_archives_dir))
         self.num_correct_archives = len(self.correct_archives())
