@@ -1,6 +1,8 @@
 .SearchBar {
     display: flex;
     flex-direction: row;
+    justify-content: left;
+    align-items: center;
     background-color: white;
     color: black;
     border-radius: 5rem;
@@ -8,3 +10,21 @@
     margin: 0.5rem;
     border: grey solid 0.1rem;
 }
+
+.SearchBar img {
+    width: 2rem;
+    height: 2rem;
+    margin: 0.5rem;
+}
+
+.SearchBar input {
+    border: none;
+    outline: none;
+    background-color: transparent;
+    color: black;
+    font-weight: bold;
+    width: 100%;
+    font-size: 1rem;
+    padding: 0.5rem;
+    border-radius: 5rem;
+} 

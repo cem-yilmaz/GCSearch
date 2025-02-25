@@ -5,7 +5,8 @@ import "./SearchBar.css";
 const SearchBar = () => {
     return (
         <div className="SearchBar">
-            <p>SearchBar</p>
+            <img src="/assets/search.png"></img>
+            <input type="text" placeholder="Search..."></input>
         </div>
     )
 };
