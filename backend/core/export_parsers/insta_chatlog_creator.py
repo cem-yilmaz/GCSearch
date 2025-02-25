@@ -3,9 +3,6 @@ import zipfile
 import json
 import csv
 
-def test_func():
-    return "Hi!"
-
 class InstaChatlogCreator:
     """
     A class that creates the chatlogs and info files from a dump of Instagram data.
@@ -18,12 +15,12 @@ class InstaChatlogCreator:
     Args:
         export_location (str): The path to the folder containing the Instagram data dump. Defaults to a folder called `export`.
     """
-    def __init__(self, export_location:str="export"): #TODO: turn these into customisable parameters
-        self.root_output_dir = 'out'
+    def __init__(self, export_location:str="../export/instagram"):
+        self.root_output_dir = '../out'
         self.info_output_dir = os.path.join(self.root_output_dir, 'info')
         self.chatlogs_output_dir = os.path.join(self.root_output_dir, 'chatlogs')
         self.raw_export_archives_dir:str = export_location
-        self.raw_messages_dir:str = 'raw_messages'
+        self.raw_messages_dir:str = '../raw_messages'
         self.export_prefix:str = 'instagram__'
 
     def __repr__(self):
