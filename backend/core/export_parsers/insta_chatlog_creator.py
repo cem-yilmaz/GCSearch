@@ -16,19 +16,26 @@ class InstaChatlogCreator:
     Place your exported Instagram data in `export/`. Use the `main` method to generate the chatlogs and info files, which will be placed in the `out/` folder.
 
     These chatlogs will follow the naming scheme `instagram__<internal_chat_name>.chatlog.csv` and the info files will follow the naming scheme `instagram__<internal_chat_name>.info.csv`.
+
+    Raises:
+        ValueError: If the number of archives does not match the number of correct and extra archives. Your data is likely incomplete or corrupted if this occurs.
     """
     def __init__(self):
+        # where the parsed files will be outputted to
         self.root_output_dir = (base_dir.parent / 'out')
         self.info_output_dir = (self.root_output_dir / 'info')
         self.chatlogs_output_dir = (self.root_output_dir / 'chatlogs')
-        self.raw_export_archives_dir:str = (base_dir.parent / 'export' / 'instagram') #os.path.join(script_dir, '..', 'export', 'instagram')
-        self.raw_messages_dir:str = (base_dir.parent / 'insta_raw_message_data') #os.path.join(script_dir, '..', 'insta_raw_message_data')
+        # where the archived data is stored
+        self.raw_export_archives_dir:str = (base_dir.parent / 'export' / 'instagram')
+        # where the raw data is extracted to
+        self.raw_messages_dir:str = (base_dir.parent / 'insta_raw_message_data')
+        # prefix for the output files
         self.export_prefix:str = 'instagram__'
+        # sanity check
         self.num_archives = len(self.zips_in_dir(self.raw_export_archives_dir))
         self.num_correct_archives = len(self.correct_archives())
         self.num_extra_archives = len(self.extra_archives())
 
-        # sanity check
         if self.num_archives != self.num_correct_archives + self.num_extra_archives:
             raise ValueError(f"The number of archives does not match the number of correct and extra archives. Your data is likely incomplete or corrupted. You have {self.num_correct_archives} (correct) + {self.num_extra_archives} (extra) = {self.num_correct_archives + self.num_extra_archives} != {self.num_archives} archives.")
 
