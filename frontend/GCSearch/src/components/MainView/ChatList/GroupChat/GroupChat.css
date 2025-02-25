@@ -1,0 +1,75 @@
+.group-chat {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 60px;
+    border-bottom: 0.1rem solid grey;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    box-sizing: border-box;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.group-chat:hover {
+    background-color: #f0f0f0;
+}
+
+.group-chat-top {
+    display: flex;
+    height: 10px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+.group-chat-top h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.group-chat-top .date {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #444;
+    font-weight: 300;
+}
+
+.group-chat-bottom {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.group-chat-bottom p {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+.group-chat-bottom .time {
+    flex: 0 0 auto;
+    font-size: 0.9rem;
+    color: #444;
+    font-weight: 300;
+}
+
+.group-chat-bottom .sender {
+    flex: 0 0 auto;
+    font-weight: bold;
+    margin-left: 0.25rem;
+}
+
+.group-chat-bottom .message {
+    display: inline-block;
+    flex: 1 1 auto;
+    white-space: nowrap;
+    overflow: hidden;
+    min-width: 0;
+    text-overflow: ellipsis;
+    color: #333;
+}

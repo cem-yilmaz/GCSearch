@@ -1,9 +1,13 @@
 .platform-selector {
+    position: sticky;
+    top: 0;
+    z-index: 1;
     width: 100%;
     height: 40px;
     display: flex;
     justify-content: space-around;
     margin-bottom: 20px;
+    background-color: white;
     border-bottom: 0.1rem solid grey;
 }
 
