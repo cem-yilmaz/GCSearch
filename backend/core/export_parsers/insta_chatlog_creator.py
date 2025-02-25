@@ -2,9 +2,13 @@ import os
 import zipfile
 import json
 import csv
+from pathlib import Path
 from ocr import OCR # This import looks silly just trust the plan
 
 report_zip_file_errors = False
+
+script_dir = os.path.dirname(__file__)
+print(f"Script directory: {script_dir}")
 
 class InstaChatlogCreator:
     """
@@ -14,16 +18,13 @@ class InstaChatlogCreator:
     Place your exported Instagram data in a folder called `export` in the same directory as this script. Use the `main` method to generate the chatlogs and info files, which will be placed in the `out` folder.
 
     These chatlogs will follow the naming scheme `instagram__<internal_chat_name>.chatlog.csv` and the info files will follow the naming scheme `instagram__<internal_chat_name>.info.csv`.
-
-    Args:
-        export_location (str): The path to the folder containing the Instagram data dump. Defaults to a folder called `export`.
     """
-    def __init__(self, export_location:str="../export/instagram"):
-        self.root_output_dir = '../out'
+    def __init__(self):
+        self.root_output_dir = os.path.join(script_dir, '..', 'out')
         self.info_output_dir = os.path.join(self.root_output_dir, 'info')
         self.chatlogs_output_dir = os.path.join(self.root_output_dir, 'chatlogs')
-        self.raw_export_archives_dir:str = export_location
-        self.raw_messages_dir:str = '../insta_raw_message_data'
+        self.raw_export_archives_dir:str = os.path.join(script_dir, '..', 'export', 'instagram')
+        self.raw_messages_dir:str = os.path.join(script_dir, '..', 'insta_raw_message_data')
         self.export_prefix:str = 'instagram__'
         self.num_archives = len(self.zips_in_dir(self.raw_export_archives_dir))
         self.num_correct_archives = len(self.correct_archives())
@@ -211,11 +212,11 @@ class InstaChatlogCreator:
 
     def change_local_media_path(self, pathname:str) -> str:
         """
-        Changes the local media path to a relative path
+        Changes the export's local media path to the correct raw export data path.
         """
-        return os.path.relpath(pathname, start=self.raw_messages_dir)
+        return pathname.replace('your_instagram_activity/messages/inbox/', self.raw_messages_dir)
 
-    def create_chatlog_file_for_chat(self, chat_name:str, include_local_media:bool=False) -> None:
+    def create_chatlog_file_for_chat(self, chat_name:str, handle_local_media:str="ignore") -> None:
         """
         Creates a `chatlog.csv` file for a chat. The csv has the following format:
 
@@ -249,7 +250,7 @@ class InstaChatlogCreator:
 
         Args:
             chat_name (str): the internal name of the chat
-            include_local_media (bool, optional): whether to incude local links to media. Requires a full media export to be made, otherwise will lead to non-existent paths. Defaults to False.
+            handle_local_media (bool|str, optional): ['*ignore*', '*include*', *'ocr'*]how to handle local media. 'ignore' (default) will not include messages that only contain media. 'include' will include the media as a local path. 'ocr' will include the media as a local path and run OCR on it. Running 'include' or 'ocr' require a full media export to be processed, and 'ocr' will significantly increase processing time.
         """
         with(open(os.path.join(self.raw_messages_dir, chat_name, 'message_1.json'), 'r')) as f:
             parsed_file = json.load(f)
