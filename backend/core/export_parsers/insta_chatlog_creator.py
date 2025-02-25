@@ -2,6 +2,7 @@ import os
 import zipfile
 import json
 import csv
+import re
 from pathlib import Path
 from ocr import OCR # This import looks silly just trust the plan
 
@@ -219,7 +220,24 @@ class InstaChatlogCreator:
         """
         Changes the export's local media path to the correct raw export data path.
         """
-        return pathname.replace('your_instagram_activity/messages/inbox/', self.raw_messages_dir)
+        return pathname.replace('your_instagram_activity/messages/inbox/', f"{str(self.raw_messages_dir)}/")
+    
+    def chat_is_system_message(self, message:str) -> bool:
+        """
+        Checks if a chat message matches a certain system message pattern.
+        Current patterns checked:
+        - <name> sent an attachment
+        - Liked a message
+        - <name> liked a message
+        - Reacted <reaction> to your message
+        """
+        patterns = [
+            re.compile(r'^.* sent an attachment$'),
+            re.compile(r'^Liked a message$'),
+            re.compile(r'^.* liked a message$'),
+            re.compile(r'^Reacted .* to your message$')
+        ]
+        return any(pattern.match(message) for pattern in patterns)
 
     def create_chatlog_file_for_chat(self, chat_name:str, handle_local_media:str="ignore") -> None:
         """
@@ -255,7 +273,7 @@ class InstaChatlogCreator:
 
         Args:
             chat_name (str): the internal name of the chat
-            handle_local_media (bool|str, optional): ['*ignore*', '*include*', *'ocr'*]how to handle local media. 'ignore' (default) will not include messages that only contain media. 'include' will include the media as a local path. 'ocr' will include the media as a local path and run OCR on it. Running 'include' or 'ocr' require a full media export to be processed, and 'ocr' will significantly increase processing time.
+            handle_local_media (str): (optional) ['*ignore*', '*include*'] How to handle local media. 'ignore' (default) will not include messages that only contain media. 'include' will include the media as a local path.
         """
         with(open(os.path.join(self.raw_messages_dir, chat_name, 'message_1.json'), 'r')) as f:
             parsed_file = json.load(f)
@@ -273,6 +291,9 @@ class InstaChatlogCreator:
                     message_content = self.decode_special_characters(message['content'])
                 else:
                     message_content = '' # this likely means we have media
+                # check if the message is a system message
+                if self.chat_is_system_message(message_content):
+                    continue # skip writing this message
                 isReply = False
                 who_replied_to = ''
                 if 'reactions' in message:
@@ -281,18 +302,25 @@ class InstaChatlogCreator:
                 else:
                     has_reactions = False
                     reactions = ''
-                translated = False
+                translated = False #TODO: implement translation tag
                 if 'photos' in message: #or message['videos']: TODO: support videos
                     is_media = True
-                    is_OCR = False # TODO: OCR
                     local_uri = message['photos'][0]['uri']
-                    remote_url = '' # turns out instagram's remote urls from an export are temporary for about 3 days
                 else:
                     is_media = False
-                    is_OCR = False
                     local_uri = ''
-                    remote_url = ''
+                is_OCR = False # assume false to start
+                remote_url = '' # turns out instagram's remote urls from an export are temporary for about 3 days
                 #TODO: check for duplicated messages (perhaps in a pass after the main one?)
+                # Now we check how we're handling local media
+                if is_media:
+                    # the current message is media, so we need to check how they want to handle it
+                    if handle_local_media == 'ignore':
+                        # we're ignoring media, so we'll skip this message
+                        continue
+                    else:
+                        # we want to translate the path to be a proper local one
+                        local_uri = self.change_local_media_path(local_uri)
                 writer.writerow([
                     docNo,
                     time,
@@ -311,24 +339,38 @@ class InstaChatlogCreator:
             f.close()
             print()
 
-    def create_chatlog_files_for_all_chats(self) -> None:
+    def create_chatlog_files_for_all_chats(self, handle_local_media:str) -> None:
         """
         Creates `chatlog.csv` files for all chats
+
+        Args:
+            handle_local_media (str, optional): ['*ignore*', '*include*'] How to handle local media. 'ignore' (default) will not include messages that only contain media. 'include' will include the media as a local path.
         """
         self.make_dir_if_not_exists(self.chatlogs_output_dir)
         for chat in self.subdirs(self.raw_messages_dir):
-            self.create_chatlog_file_for_chat(chat)
+            self.create_chatlog_file_for_chat(chat, handle_local_media)
 
-    def create_chatlogs_and_info_for_all_chats(self) -> None:
+    def create_chatlogs_and_info_for_all_chats(self, handle_local_media:str) -> None:
+        """
+        Wrapper for `create_chatlog_files_for_all_chats` and `create_info_files_for_all_chats`.
+
+        Args:
+            handle_local_media (str, optional): ['*ignore*', '*include*'] How to handle local media. 'ignore' (default) will not include messages that only contain media. 'include' will include the media as a local path.
+        """
         self.create_info_files_for_all_chats()
-        self.create_chatlog_files_for_all_chats()
+        self.create_chatlog_files_for_all_chats(handle_local_media)
 
-    def main(self) -> None:
+    def main(self, handle_local_media:str='ignore') -> None:
         """
         \"*If you're going to run one function, make sure it's `main()`*\"
 
         This function turns the Instagram data dump in `export` into chatlogs and info files in the `out` folder.
+        
+        **It is not reccomended to run `ocr` on a machine with < 16GB of RAM; instead, use `include` and then manually OCR the chats needed.**
+        
+        Args:
+            handle_local_media (str, optional): ['*ignore*', '*include*'] How to handle local media. 'ignore' (default) will not include messages that only contain media. 'include' will include the media as a local path.
         """
         self.extract_messages_folder()
-        self.create_chatlogs_and_info_for_all_chats()
+        self.create_chatlogs_and_info_for_all_chats(handle_local_media)
         #TODO: tell the user they can safely delete the raw_messages folder IF they choose not to render images
