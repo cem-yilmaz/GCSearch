@@ -177,7 +177,7 @@ class InstaChatlogCreator:
         Creates an `info.csv` file for a chat
         """
         internal_chat_name, display_name, participants = self.get_info_about_chat(chat_name)
-        with open(os.path.join(self.info_output_dir, f'{self.export_prefix}.{internal_chat_name}.info.csv'), 'w') as f:
+        with open(os.path.join(self.info_output_dir, f'{self.export_prefix}{internal_chat_name}.info.csv'), 'w') as f:
             writer = csv.writer(f)
             writer.writerow(['Internal chat name', 'Display name', 'Participants'])
             writer.writerow([internal_chat_name, display_name, '['+', '.join(participants)+']'])

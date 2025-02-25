@@ -170,5 +170,7 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# Export directory
+# GCSearch
 backend/core/export/**/*.zip
+backend/core/raw_messages
+backend/core/out/**/*.csv
