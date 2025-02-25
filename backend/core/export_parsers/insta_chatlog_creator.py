@@ -3,6 +3,8 @@ import zipfile
 import json
 import csv
 
+report_zip_file_errors = False
+
 class InstaChatlogCreator:
     """
     A class that creates the chatlogs and info files from a dump of Instagram data.
@@ -22,6 +24,13 @@ class InstaChatlogCreator:
         self.raw_export_archives_dir:str = export_location
         self.raw_messages_dir:str = '../raw_messages'
         self.export_prefix:str = 'instagram__'
+        self.num_archives = len(self.zips_in_dir(self.raw_export_archives_dir))
+        self.num_correct_archives = len(self.correct_archives())
+        self.num_extra_archives = len(self.extra_archives())
+
+        # sanity check
+        if self.num_archives != self.num_correct_archives + self.num_extra_archives:
+            raise ValueError(f"The number of archives does not match the number of correct and extra archives. Your data is likely incomplete or corrupted. You have {self.num_correct_archives} (correct) + {self.num_extra_archives} (extra) = {self.num_correct_archives + self.num_extra_archives} != {self.num_archives} archives.")
 
     def __repr__(self):
         return f"InstaChatlogCreator(export_location={self.raw_export_archives_dir}) | Will read zip archives from {self.raw_export_archives_dir}/, extract the core message data to {self.raw_messages_dir}/, and output chatlogs to {self.chatlogs_output_dir}/ and info files to {self.info_output_dir}/"
@@ -92,8 +101,9 @@ class InstaChatlogCreator:
                     if expected_file not in names:
                         return False
         except Exception as e:
-            print(f"Error while reading zip file {zip_path}: {e}")
-            print("Skipping this file and continuing normal execution.")
+            if report_zip_file_errors:
+                print(f"Error while reading zip file {zip_path}: {e}")
+                print("Skipping this file and continuing normal execution.")
             return False
 
             # Check if any file/directory starts with the inbox_prefi
@@ -105,6 +115,13 @@ class InstaChatlogCreator:
         Checks if an archive contains the directory `your_instagram_activity/messages/inbox`
         """
         return [archive for archive in self.zips_in_dir(self.raw_export_archives_dir) if self.check_inbox_and_messages(os.path.join(self.raw_export_archives_dir, archive))]
+
+    def extra_archives(self) -> list[str]:
+        """
+        Returns the extra archives. These do not contain raw message data but instead contain extra media data.
+        """
+        correct_archives = self.correct_archives()
+        return [archive for archive in self.zips_in_dir(self.raw_export_archives_dir) if archive not in correct_archives]
 
     def extract_messages_folder(self, prefix:str='your_instagram_activity/messages/inbox/') -> None:
         """
