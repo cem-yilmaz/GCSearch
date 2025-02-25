@@ -4,8 +4,8 @@ import os
 from datetime import datetime
 
 # input file and output file
-input_file = "text/final/Line_chat.txt"  # input file
-output_file = "jeiba/LINE_chatlog_main.csv"  # output file path
+input_file = "Line_chat.txt"  # input file
+output_file = "LINE_chatlog_main.csv"  # output file path
 
 #  the format of the input file
 chat_id_pattern = re.compile(r"\[LINE\] Chat (\d+)")  # [LINE] Chat n
