@@ -34,7 +34,7 @@ class OCR:
             ocr_to_use = PaddleOCR()
         return ocr_to_use
 
-    def transcribe(self, image_path:str) -> str:
+    def transcribe(self, image_path:str) -> str | None:
         """
         Transcribes an image using the instantiated OCR model.
 
@@ -42,7 +42,7 @@ class OCR:
             image_path (str): The path to the image file. Supported image formats are PNG, JPG, and JPEG.
 
         Returns:
-            str: The transcribed text.
+            str: The transcribed text (None if no text is found).
 
         Raises:
             FileNotFoundError: If the image file is not found.
@@ -68,10 +68,13 @@ class OCR:
             return text
         
         data = self.ocr_model.ocr(image_file)
-        text = ''
-        for line in data:
-            for word in line:
-                text_line = word[-1]
-                text += text_line[0] + ' '
-        cleaned_text = add_spaces(text)
+        if data != [None]:
+            text = ''
+            for line in data:
+                for word in line:
+                    text_line = word[-1]
+                    text += text_line[0] + ' '
+            cleaned_text = add_spaces(text)
+        else:
+            cleaned_text = None
         return cleaned_text
