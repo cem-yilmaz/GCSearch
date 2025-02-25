@@ -1,0 +1,19 @@
+div {
+    display: flex;
+    flex-direction: row;
+}
+
+h1 {
+    text-align: center;
+}
+
+.central-container {
+    display: flex;
+    flex-direction: column;
+    border-radius: 1rem;
+    width: 50%;
+    height: 100%;
+    flex-direction: column;
+    background-color: black;
+    margin: 1rem;
+}

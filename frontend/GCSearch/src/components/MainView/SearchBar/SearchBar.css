@@ -1,0 +1,9 @@
+.SearchBar {
+    display: flex;
+    flex-direction: row;
+    background-color: white;
+    color: black;
+    border-radius: 5rem;
+    padding: 0.5rem;
+    margin: 0.5rem;
+}
