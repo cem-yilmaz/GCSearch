@@ -172,5 +172,5 @@ cython_debug/
 
 # GCSearch
 backend/core/export/**/*.zip
-backend/core/raw_messages
+backend/core/insta_raw_message_data
 backend/core/out/**/*.csv

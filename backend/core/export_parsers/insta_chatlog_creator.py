@@ -2,6 +2,7 @@ import os
 import zipfile
 import json
 import csv
+from ocr import OCR # This import looks silly just trust the plan
 
 report_zip_file_errors = False
 
@@ -22,7 +23,7 @@ class InstaChatlogCreator:
         self.info_output_dir = os.path.join(self.root_output_dir, 'info')
         self.chatlogs_output_dir = os.path.join(self.root_output_dir, 'chatlogs')
         self.raw_export_archives_dir:str = export_location
-        self.raw_messages_dir:str = '../raw_messages'
+        self.raw_messages_dir:str = '../insta_raw_message_data'
         self.export_prefix:str = 'instagram__'
         self.num_archives = len(self.zips_in_dir(self.raw_export_archives_dir))
         self.num_correct_archives = len(self.correct_archives())
@@ -126,7 +127,7 @@ class InstaChatlogCreator:
     def extract_messages_folder(self, prefix:str='your_instagram_activity/messages/inbox/') -> None:
         """
         Extracts only the messages folder (`your_instagram_activity/messages/inbox`) from an archive, 
-        but places its contents directly in `raw_messages/`
+        but places its contents directly in `insta_raw_message_data/`
 
         Raises:
             LookupError: If the export does not contain any archives with the messages in it
@@ -208,7 +209,13 @@ class InstaChatlogCreator:
         for chat in self.subdirs(self.raw_messages_dir):
             self.create_info_file_for_chat(chat)
 
-    def create_chatlog_file_for_chat(self, chat_name:str, prefer_local_media:bool=False) -> None:
+    def change_local_media_path(self, pathname:str) -> str:
+        """
+        Changes the local media path to a relative path
+        """
+        return os.path.relpath(pathname, start=self.raw_messages_dir)
+
+    def create_chatlog_file_for_chat(self, chat_name:str, include_local_media:bool=False) -> None:
         """
         Creates a `chatlog.csv` file for a chat. The csv has the following format:
 
@@ -242,12 +249,12 @@ class InstaChatlogCreator:
 
         Args:
             chat_name (str): the internal name of the chat
-            prefer_local_media (bool, optional): whether to prefer local media. Defaults to False.
+            include_local_media (bool, optional): whether to incude local links to media. Requires a full media export to be made, otherwise will lead to non-existent paths. Defaults to False.
         """
         with(open(os.path.join(self.raw_messages_dir, chat_name, 'message_1.json'), 'r')) as f:
             parsed_file = json.load(f)
             f.close()
-        with(open(os.path.join(self.chatlogs_output_dir, f'{self.export_prefix}.{chat_name}.chatlog.csv'), 'w')) as f:
+        with(open(os.path.join(self.chatlogs_output_dir, f'{self.export_prefix}{chat_name}.chatlog.csv'), 'w')) as f:
             writer = csv.writer(f)
             writer.writerow(['docNo', 'time', 'sender', 'message', 'isReply', 'who_replied_to', 'has_reactions', 'reactions', 'translated', 'is_media', 'is_OCR', 'local_uri', 'remote_url']) #TODO: implement shared/forwarded posts
             for i in range(len(parsed_file['messages'])):
