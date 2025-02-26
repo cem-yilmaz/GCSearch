@@ -44,16 +44,6 @@ def compute_sentence_embedding(texts):
     embeddings = model.encode(texts)
     return embeddings
 
-# read csv file
-# def read_csv_file(filepath):
-#     df = pd.read_csv(filepath)
-
-#     if "message" not in df.columns or "is_media" not in df.columns:
-#         raise ValueError("CSV should have included 'message' and 'is_media' col")
-
-#     text_df = df[df["is_media"] == False][["message"]].dropna().astype(str)
-
-#     return text_df
 def read_csv_file(filepath):
     df = pd.read_csv(filepath)
     
