@@ -1,5 +1,7 @@
 import re
 import jieba
+import logging
+jieba.setLogLevel(logging.ERROR)
 
 with open("stopwords/traditional_chinese_stop_words.txt", "r", encoding="utf-8") as f:
     stopwords = set(f.read().splitlines())
