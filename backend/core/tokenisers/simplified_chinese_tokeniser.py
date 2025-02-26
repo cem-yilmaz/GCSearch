@@ -1,9 +1,13 @@
 import re
-import thulac
+import os
+from thulac import thulac
 
-thulac_model = thulac.thulac(seg_only=True)
+thulac_model = thulac(seg_only=True)
 
-with open("stopwords/hit_stopwords.txt", "r", encoding="utf-8") as f:
+script_dir = os.path.dirname(os.path.abspath(__file__))
+stopwords_file_name = os.path.join(script_dir, "stopwords", "hit_stopwords.txt")
+
+with open(stopwords_file_name, "r", encoding="utf-8") as f:
     stopwords = set(f.read().splitlines())
     f.close()
 

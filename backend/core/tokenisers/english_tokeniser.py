@@ -1,8 +1,10 @@
 import re
+import os
 from nltk import PorterStemmer
 porter = PorterStemmer()
 
-stopwords_file_name = "stopwords/ttds_2023_english_stop_words.txt"
+script_dir = os.path.dirname(os.path.abspath(__file__))
+stopwords_file_name = os.path.join(script_dir, "stopwords", "ttds_2023_english_stop_words.txt")
 
 with open(stopwords_file_name, "r") as f:
     stopwords = f.read().splitlines()

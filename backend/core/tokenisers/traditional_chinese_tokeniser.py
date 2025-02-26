@@ -1,9 +1,13 @@
 import re
+import os
 import jieba
 import logging
 jieba.setLogLevel(logging.ERROR)
 
-with open("stopwords/traditional_chinese_stop_words.txt", "r", encoding="utf-8") as f:
+script_dir = os.path.dirname(os.path.abspath(__file__))
+stopwords_file_name = os.path.join(script_dir, "stopwords", "traditional_chinese_stop_words.txt")
+
+with open(stopwords_file_name, "r", encoding="utf-8") as f:
     stopwords = set(f.read().splitlines())
     f.close()
 
