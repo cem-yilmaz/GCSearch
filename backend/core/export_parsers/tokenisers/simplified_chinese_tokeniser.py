@@ -3,9 +3,9 @@ import thulac
 
 thulac_model = thulac.thulac(seg_only=True)
 
-stopwords = set()
 with open("stopwords/hit_stopwords.txt", "r", encoding="utf-8") as f:
     stopwords = set(f.read().splitlines())
+    f.close()
 
 def zh_tokenise_document(doc: str) -> list[str]:
     """
