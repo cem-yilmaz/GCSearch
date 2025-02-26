@@ -89,6 +89,7 @@ sympy==1.13.1
 symspellpy==6.7.8
 termcolor==2.5.0
 threadpoolctl==3.5.0
+thulac==0.2.2
 tifffile==2025.2.18
 tokenizers==0.21.0
 tomli==2.2.1
