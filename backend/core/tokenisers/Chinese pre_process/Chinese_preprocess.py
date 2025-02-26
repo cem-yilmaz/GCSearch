@@ -11,33 +11,30 @@ import re
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sentence_transformers import SentenceTransformer
 
-# 1. 加载停用词表
+# 1. loadingstopwords
 def load_stopwords(filepath="F:/hit_stopwords.txt"):
-    """加载停用词表"""
+ 
     with open(filepath, "r", encoding="utf-8") as f:
         stopwords = set(f.read().splitlines())
     return stopwords
 
-# 2. 初始化 THULAC（不开启词性标注）
+# 2.inicialise
 thulac_model = thulac.thulac(seg_only=True)
 
-# 3. 使用 THULAC 进行分词
+# 3. using THULAC tokeniser
 def thulac_tokenizer(text, stopwords):
-    """
-    使用 THULAC 进行分词，并去除停用词。
-    """
-    # 仅保留中文字符
+    
     text = re.sub(r'[^\u4e00-\u9fff]', ' ', text)
 
-    # 使用 THULAC 进行分词
+  
     words = thulac_model.cut(text, text=True).split()
 
-    # 过滤停用词
+    
     words = [word for word in words if word not in stopwords and len(word) > 1]
 
     return " ".join(words)
 
-# 4. 计算 TF-IDF 关键词权重
+
 def compute_tfidf(corpus):
     """
     计算 TF-IDF 关键词权重，提取重要词。
@@ -54,29 +51,26 @@ def compute_tfidf(corpus):
     
     return tfidf_scores
 
-# 5. 语义向量化（BERT 或 Word2Vec）
+# 5. BERT 或 Word2Vec
 def compute_sentence_embedding(texts):
-    """
-    使用 BERT (SentenceTransformers) 进行语义向量化，方便 GC 搜索。
-    """
+   
     model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
     embeddings = model.encode(texts)
     return embeddings
 
-# 6. 预处理聊天记录
 def preprocess_messages(df, stopwords):
     chat_messages = df['message'].dropna().astype(str)
     
-    # 处理每条消息
+
     processed_tokens = chat_messages.apply(lambda text: thulac_tokenizer(text, stopwords))
 
-    # 计算 TF-IDF 关键词
+ 
     tfidf_keywords = compute_tfidf(processed_tokens)
 
-    # 计算语义向量
+  
     embeddings = compute_sentence_embedding(processed_tokens.tolist())
 
-    # 生成处理后的 DataFrame
+    
     processed_df = pd.DataFrame({
         "original_message": chat_messages,
         "processed_tokens": processed_tokens,
@@ -86,19 +80,19 @@ def preprocess_messages(df, stopwords):
 
     return processed_df
 
-# 7. 读取聊天记录数据
+
 file_path = "F:/chatlog.csv"  # 确保文件路径正确
 df = pd.read_csv(file_path)
 
-# 8. 加载停用词表
+
 stopwords = load_stopwords("F:/hit_stopwords.txt")
 
-# 9. 运行数据预处理
+
 processed_chat_df = preprocess_messages(df, stopwords)
 
-# 10. 保存结果到 CSV 文件
+
 processed_chat_df.to_csv("F:/processed_chatlog_optimized.csv", index=False, encoding="utf-8-sig")
 
-# 11. 显示部分处理结果
+
 print(processed_chat_df.head())
 
