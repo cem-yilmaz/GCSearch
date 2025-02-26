@@ -1,0 +1,16 @@
+.GroupChatView {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow-y: scroll;
+    box-sizing: border-box;
+    padding: 1rem;
+}
+
+.GroupChatMessages {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}

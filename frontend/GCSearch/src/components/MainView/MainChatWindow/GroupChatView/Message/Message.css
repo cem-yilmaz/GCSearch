@@ -1,0 +1,33 @@
+.message-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+}
+
+.message-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.1rem;
+}
+
+.message-header {
+    font-size: 0.75rem;
+    color: #888;
+    line-height: 0.1rem;
+}
+
+.message-content {
+    background-color: lightblue;
+    border-radius: 1rem;
+    max-width: 60%;
+    padding: 0.2rem 0.5rem;
+    font-size: 1rem;
+    word-wrap: break-word;
+    color: black;
+}
+
+.message-right .message-content{
+    background-color: lavender;
+}

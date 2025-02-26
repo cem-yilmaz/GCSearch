@@ -23,8 +23,11 @@ const ChatList = () => {
         <div className="ChatList">
             <PlatformSelector />
             <div className="group-chats">
-                {examples_groupchats.map((groupchat) => (
-                    <GroupChat groupchat={groupchat} />
+                {examples_groupchats.map((groupchat, index) => (
+                    <GroupChat
+                        key={index}
+                        groupchat={groupchat} 
+                    />
                 ))}
             </div>
         </div>
