@@ -42,24 +42,21 @@ class OCR:
             image_path (str): The path to the image file. Supported image formats are PNG, JPG, and JPEG.
 
         Returns:
-            str: The transcribed text (None if no text is found).
-
-        Raises:
-            FileNotFoundError: If the image file is not found.
+            str: The transcribed text (None if no text is found, or if the image file does not exist/is incompatible).   
         """
         supported_formats = ['png', 'jpg', 'jpeg']
         image_file = None
 
         # check the extension
         if image_path.split('.')[-1] not in supported_formats:
-            raise ValueError(f'Unsupported image format: \"{image_path.split(".")[-1]}\". Supported formats are {supported_formats}.')
+            return None
 
         # Find which file exists
         if os.path.isfile(image_path):
             image_file = image_path
 
         if not image_file:
-            raise FileNotFoundError(f'No image found with the provided name and supported extensions ({supported_formats}).')
+            return None
         
         def add_spaces(text):
             """Insert spaces where lowercase letters are followed by uppercase letters or where words are merged."""
