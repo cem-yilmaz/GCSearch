@@ -378,7 +378,7 @@ class InstaChatlogCreator:
         self.create_chatlog_files_for_all_chats(handle_local_media)
 
     # OCR stuff
-    # OCR'ing is so expensive we need to OCR individual chats *after* they have been chatlog'd
+    # OCR'ing is so expensive we may need to OCR individual chats *after* they have been chatlog'd
     def ocr_message(self, ocr_model:OCR, GCName:str="hannah_1414358549958244", chat_docID:int=29508) -> None:
         """
         Updates an individual message at `chat_docID` in the chatlog `GCName` with the OCR'd text.
