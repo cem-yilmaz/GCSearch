@@ -312,7 +312,6 @@ if __name__ == "__main__":
 
     print("Saving processed chatlog to CSV...")
     processed_chat_df.to_csv(output_csv_path, index=False, encoding="utf-8-sig")
-    print("Completed!")
 
     print("Building PII from input CSV...")
     pi_index = build_positional_inverted_index_from_csv(output_csv_path)
