@@ -32,8 +32,8 @@ def load_stopwords(filepath):
 
 # Load stopwords for various languages
 STOPWORDS = {
-    "zh_trad": load_stopwords("jeiba/stop_words.txt"),   # Traditional Chinese
-    "zh_simp": load_stopwords("jeiba/hit_stopwords.txt"),  # Simplified Chinese
+    "zh_trad": load_stopwords("stop_words.txt"),   # Traditional Chinese
+    "zh_simp": load_stopwords("hit_stopwords.txt"),  # Simplified Chinese
     "en": set(stopwords.words("english")),
     "tr": set(stopwords.words("turkish"))
 }
