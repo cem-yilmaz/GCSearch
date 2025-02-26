@@ -62,8 +62,8 @@ def write_positional_index_to_file(index, output_path):
             f.write("\n")
 
 # File paths
-input_csv = "processed_chatlog.csv"  # Input file
-output_index_file = "positional_inverted_index.txt"  # Output file
+input_csv = "out/chatlogs/instagram__ross_1012019363534045.chatlog.csv" #"processed_chatlog.csv"  # Input file
+output_index_file = "test_positional_inverted_index.txt"  # Output file
 
 # Build and save the positional inverted index
 print("Building PII from input CSV...")

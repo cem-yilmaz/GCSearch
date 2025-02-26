@@ -297,7 +297,7 @@ class InstaChatlogCreator:
                 if docNo == 0:
                     writer.writerow(['docNo', 'time', 'sender', 'message', 'isReply', 'who_replied_to', 'has_reactions', 'reactions', 'translated', 'is_media', 'is_OCR', 'local_uri', 'remote_url']) #TODO: implement shared/forwarded posts
                 for i in range(len(parsed_file['messages'])):
-                    print(f"Generating chatlog ({chat_name}) for message {i} of {len(parsed_file['messages']) * num_jsons}", end='\r')
+                    print(f"Generating chatlog ({chat_name}) for message {i} of {len(parsed_file['messages'])}", end='\r')
                     message = parsed_file['messages'][i]
                     docNo = docNo + 1
                     sender = self.decode_special_characters(message['sender_name'])
