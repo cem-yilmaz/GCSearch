@@ -2,7 +2,10 @@ from tokenisers.ttds_tokeniser import Tokeniser
 import csv
 import os
 from pathlib import Path
-from collections import defaultdict
+import concurrent.futures
+from functools import reduce
+import math
+from time import time
 
 class PIIConstructor:
     """
@@ -17,43 +20,75 @@ class PIIConstructor:
         
     def __repr__(self):
         return f"PII Constructor tokenising using \"{self.tokeniser.language}\" tokeniser"
+    
+    def _process_chunk(self, rows: list) -> dict:
+        """Process a chunk of rows and return a partial index."""
+        index = {}
+        for row in rows:
+            docNo = row["docNo"]
+            message = row["message"]
+            tokens = self.tokeniser.tokenise(message)
 
-    def build_pii_from_csv(self, csv_file_path:str) -> dict:
+            for position, term in enumerate(tokens, 1):
+                if term not in index:
+                    index[term] = {"document_frequency": 0, "postings": {}}
+
+                if docNo not in index[term]["postings"]:
+                    index[term]["document_frequency"] += 1
+                    index[term]["postings"][docNo] = []
+
+                index[term]["postings"][docNo].append(position)
+
+        return index
+
+    def _merge_indexes(self, indexes: list) -> dict:
+        """Merge multiple partial indexes into one."""
+        merged = {}
+        for index in indexes:
+            for term, data in index.items():
+                if term not in merged:
+                    merged[term] = {"document_frequency": 0, "postings": {}}
+
+                merged[term]["document_frequency"] += data["document_frequency"]
+
+                for docNo, positions in data["postings"].items():
+                    merged[term]["postings"][docNo] = positions
+
+        return merged
+
+    def build_pii_from_csv(self, csv_file_path:str, num_threads:int=os.cpu_count()) -> dict:
         """
         Builds a Positional Inverted Index (PII) from the given `chatlog.csv` file.
         
         Args:
             csv_file_path (str): Path to the `chatlog.csv` file
+            num_threads (int): Number of threads to use for processing. Defaults to `os.cpu_count()`, or 4 as a fallback.
 
         Returns:
             dict: A dictionary representing the PII. The keys are the tokens, and the values are dictionaries. The inner dictionaries have the document IDs as keys, and the positions of the tokens in the document as values.
         """
-        index = {}
+        if num_threads is None:
+            num_threads = 4
 
+        # Read all rows first
         with open(csv_file_path, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
+            rows = list(reader)
 
-            for row in reader:
-                docNo = row["docNo"]
-                message = row["message"]
+        if len(rows) == 0:
+            return None
 
-                tokens = self.tokeniser.tokenise(message)
+        # Calculate chunk size
+        chunk_size = math.ceil(len(rows) / num_threads)
+        chunks = [rows[i:i+chunk_size] for i in range(0, len(rows), chunk_size)]
 
-                for position, term in enumerate(tokens, 1):
-                    if term not in index:
-                        index[term] = {
-                            "document_frequency": 0,
-                            "postings": {}
-                        }
-                    
-                    if docNo not in index[term]["postings"]:
-                        index[term]["document_frequency"] += 1
-                        index[term]["postings"][docNo] = []
+        # Process chunks in parallel
+        with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
+            futures = [executor.submit(self._process_chunk, chunk) for chunk in chunks]
+            results = [future.result() for future in concurrent.futures.as_completed(futures)]
 
-                    index[term]["postings"][docNo].append(position)
-            f.close()
-
-        return index
+        # Merge results
+        return self._merge_indexes(results)
     
     def write_pii_to_txt(self, pii:dict, output_file:str) -> None:
         """
@@ -69,12 +104,13 @@ class PIIConstructor:
             pii (dict): The PII to be written.
             output_file (str): The output file path to write the PII to.
         """
-        with open(output_file, "w") as f:
-            for term, docs in pii.items():
-                f.write(f"{term}: {docs['document_frequency']}\n")
-                for doc, positions in docs["postings"].items():
-                    f.write(f"\t{doc}: {', '.join(map(str, positions))}\n")
-            f.close()
+        if pii is not None:
+            with open(output_file, "w") as f:
+                for term, docs in pii.items():
+                    f.write(f"{term}: {docs['document_frequency']}\n")
+                    for doc, positions in docs["postings"].items():
+                        f.write(f"\t{doc}: {', '.join(map(str, positions))}\n")
+                f.close()
 
     def create_pii_from_csv(self, csv_file_path:str, output_dir:str="piis") -> None:
         """
@@ -94,8 +130,36 @@ class PIIConstructor:
         chatname = csv_file_path.split("/")[-1]
         
         output_path = script_dir / output_dir / f"{chatname}.pii.txt"
-        input(f"DEBUG: writing to {output_path}")
 
         pii = self.build_pii_from_csv(csv_file_path)
         self.write_pii_to_txt(pii, output_path)
-        
+
+    def create_piis_from_folder(self, input_dir:str="out/chatlogs", output_dir:str="piis") -> None:
+        """
+        Creates PIIs from all `chatlog.csv` files in a given directory, and writes them to TXT files. Wrapper for `create_pii_from_csv`.
+
+        Args:
+            input_dir (str): The directory containing the `chatlog.csv` files. Defaults to `out/chatlogs`.
+            output_dir (str): The directory to write the PIIs to. Defaults to `piis`.
+        """
+        try:
+            script_dir = Path(os.path.dirname(os.path.abspath(__file__)))
+        except NameError:
+            script_dir = Path(os.path.abspath('backend/core'))
+
+        input_path = script_dir / input_dir
+        output_path = script_dir / output_dir
+
+        print(f"DEBUG: reading chatlogs from {input_path}, and writing PIIs to {output_path}")
+
+        chatlogs = os.listdir(input_path)
+        num_logs = len(chatlogs)
+
+        for i in range(num_logs):
+            file = chatlogs[i]
+            if file.endswith(".chatlog.csv"):
+                print(f"Processing {file} ({i+1}/{num_logs})", end="\r")
+                self.create_pii_from_csv(str(input_path / file), str(output_path))
+
+
+p = PIIConstructor() # DELETE THIS LINE
