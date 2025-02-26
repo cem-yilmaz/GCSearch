@@ -230,14 +230,25 @@ class InstaChatlogCreator:
         - Liked a message
         - <name> liked a message
         - Reacted <reaction> to your message
+        - <name> reacted <reaction> to your message
         """
         patterns = [
             re.compile(r'^.* sent an attachment$'),
             re.compile(r'^Liked a message$'),
             re.compile(r'^.* liked a message$'),
-            re.compile(r'^Reacted .* to your message$')
+            re.compile(r'^Reacted .* to your message$'),
+            re.compile(r'^.* reacted .* to your message$')
         ]
         return any(pattern.match(message) for pattern in patterns)
+    
+    def get_num_of_message_jsons_for_chat(self, chat_name:str) -> int:
+        """
+        Returns the number of `message_<i>.json` files in a chat directory.
+
+        Args:
+            chat_name (str): The internal name of the chat
+        """
+        return len([name for name in os.listdir(os.path.join(self.raw_messages_dir, chat_name)) if name.startswith('message_')])
 
     def create_chatlog_file_for_chat(self, chat_name:str, handle_local_media:str="ignore") -> None:
         """
@@ -275,69 +286,75 @@ class InstaChatlogCreator:
             chat_name (str): the internal name of the chat
             handle_local_media (str): (optional) ['*ignore*', '*include*'] How to handle local media. 'ignore' (default) will not include messages that only contain media. 'include' will include the media as a local path.
         """
-        with(open(os.path.join(self.raw_messages_dir, chat_name, 'message_1.json'), 'r')) as f:
-            parsed_file = json.load(f)
-            f.close()
-        with(open(os.path.join(self.chatlogs_output_dir, f'{self.export_prefix}{chat_name}.chatlog.csv'), 'w')) as f:
-            writer = csv.writer(f)
-            writer.writerow(['docNo', 'time', 'sender', 'message', 'isReply', 'who_replied_to', 'has_reactions', 'reactions', 'translated', 'is_media', 'is_OCR', 'local_uri', 'remote_url']) #TODO: implement shared/forwarded posts
-            for i in range(len(parsed_file['messages'])):
-                print(f"Generating chatlog ({chat_name}) for message {i} of {len(parsed_file['messages'])}", end='\r')
-                message = parsed_file['messages'][i]
-                docNo = i
-                sender = self.decode_special_characters(message['sender_name'])
-                time = message['timestamp_ms']
-                if 'content' in message:
-                    message_content = self.decode_special_characters(message['content'])
-                else:
-                    message_content = '' # this likely means we have media
-                # check if the message is a system message
-                if self.chat_is_system_message(message_content):
-                    continue # skip writing this message
-                isReply = False
-                who_replied_to = ''
-                if 'reactions' in message:
-                    has_reactions = True
-                    reactions = [f'{self.decode_special_characters(reaction["actor"])}: {self.decode_special_characters(reaction["reaction"])}' for reaction in message['reactions']]
-                else:
-                    has_reactions = False
-                    reactions = ''
-                translated = False #TODO: implement translation tag
-                if 'photos' in message: #or message['videos']: TODO: support videos
-                    is_media = True
-                    local_uri = message['photos'][0]['uri']
-                else:
-                    is_media = False
-                    local_uri = ''
-                is_OCR = False # assume false to start
-                remote_url = '' # turns out instagram's remote urls from an export are temporary for about 3 days
-                #TODO: check for duplicated messages (perhaps in a pass after the main one?)
-                # Now we check how we're handling local media
-                if is_media:
-                    # the current message is media, so we need to check how they want to handle it
-                    if handle_local_media == 'ignore':
-                        # we're ignoring media, so we'll skip this message
-                        continue
+        num_jsons = self.get_num_of_message_jsons_for_chat(chat_name)
+        for j in range(1, num_jsons+1): # a single message_<i>.json file only stores 10000 messages
+            with(open(os.path.join(self.raw_messages_dir, chat_name, f'message_{j}.json'), 'r')) as f:
+                parsed_file = json.load(f)
+                f.close()
+            docNo = (j-1) * 10000 # to track the document number between message.jsons
+            with(open(os.path.join(self.chatlogs_output_dir, f'{self.export_prefix}{chat_name}.chatlog.csv'), 'a')) as f:
+                writer = csv.writer(f)
+                if docNo == 0:
+                    writer.writerow(['docNo', 'time', 'sender', 'message', 'isReply', 'who_replied_to', 'has_reactions', 'reactions', 'translated', 'is_media', 'is_OCR', 'local_uri', 'remote_url']) #TODO: implement shared/forwarded posts
+                for i in range(len(parsed_file['messages'])):
+                    print(f"Generating chatlog ({chat_name}) for message {i} of {len(parsed_file['messages']) * num_jsons}", end='\r')
+                    message = parsed_file['messages'][i]
+                    docNo = docNo + 1
+                    sender = self.decode_special_characters(message['sender_name'])
+                    time = message['timestamp_ms']
+                    if 'content' in message:
+                        message_content = self.decode_special_characters(message['content'])
                     else:
-                        # we want to translate the path to be a proper local one
-                        local_uri = self.change_local_media_path(local_uri)
-                writer.writerow([
-                    docNo,
-                    time,
-                    sender,
-                    message_content,
-                    isReply,
-                    who_replied_to,
-                    has_reactions,
-                    reactions,
-                    translated,
-                    is_media,
-                    is_OCR,
-                    local_uri,
-                    remote_url
-                ])
-            f.close()
-            print()
+                        message_content = '' # this likely means we have media
+                    # check if the message is a system message
+                    if self.chat_is_system_message(message_content):
+                        docNo -= 1 # correct the docNo
+                        continue # skip writing this message
+                    isReply = False
+                    who_replied_to = ''
+                    if 'reactions' in message:
+                        has_reactions = True
+                        reactions = [f'{self.decode_special_characters(reaction["actor"])}: {self.decode_special_characters(reaction["reaction"])}' for reaction in message['reactions']]
+                    else:
+                        has_reactions = False
+                        reactions = ''
+                    translated = False #TODO: implement translation tag
+                    if 'photos' in message: #or message['videos']: TODO: support videos
+                        is_media = True
+                        local_uri = message['photos'][0]['uri']
+                    else:
+                        is_media = False
+                        local_uri = ''
+                    is_OCR = False # assume false to start
+                    remote_url = '' # turns out instagram's remote urls from an export are temporary for about 3 days
+                    #TODO: check for duplicated messages (perhaps in a pass after the main one?)
+                    # Now we check how we're handling local media
+                    if is_media:
+                        # the current message is media, so we need to check how they want to handle it
+                        if handle_local_media == 'ignore':
+                            # we're ignoring media, so we'll skip this message
+                            docNo -= 1 # correct the docNo
+                            continue
+                        else:
+                            # we want to translate the path to be a proper local one
+                            local_uri = self.change_local_media_path(local_uri)
+                    writer.writerow([
+                        docNo,
+                        time,
+                        sender,
+                        message_content,
+                        isReply,
+                        who_replied_to,
+                        has_reactions,
+                        reactions,
+                        translated,
+                        is_media,
+                        is_OCR,
+                        local_uri,
+                        remote_url
+                    ])
+                f.close()
+                print()
 
     def create_chatlog_files_for_all_chats(self, handle_local_media:str) -> None:
         """
@@ -359,6 +376,38 @@ class InstaChatlogCreator:
         """
         self.create_info_files_for_all_chats()
         self.create_chatlog_files_for_all_chats(handle_local_media)
+
+    # OCR stuff
+    # OCR'ing is so expensive we need to OCR individual chats *after* they have been chatlog'd
+    def ocr_message(self, ocr_model:OCR, GCName:str="hannah_1414358549958244", chat_docID:int=29508) -> None:
+        """
+        Updates an individual message at `chat_docID` in the chatlog `GCName` with the OCR'd text.
+        
+        **This function is currently unused.**
+
+        Args:
+            ocr_model (OCR): The OCR model to use.
+            GCName (str): The internal name of the chat.
+            chat_docID (str): The document ID of the message
+        """
+        with open(os.path.join(str(self.chatlogs_output_dir), f'{self.export_prefix}{GCName}.chatlog.csv'), 'r') as f:
+            reader = csv.reader(f)
+            rows = list(reader)
+            print(len(rows))
+            f.close()
+        matches = [row for row in rows if row[0] == str(chat_docID)]
+        if matches:
+            # we should only get one match, so for now, just take the first value
+            match = matches[0]
+        else:
+            match = None
+
+        image_path = match[11]
+        result = ocr_model.transcribe(image_path)
+        if result:
+            print(f"DEBUG: OCR successful. Replacing message {chat_docID} in chat {GCName} with OCR'd text ({result})")
+            match[3] = result
+            match[10] = True
 
     def main(self, handle_local_media:str='ignore') -> None:
         """
