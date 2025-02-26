@@ -2,7 +2,7 @@ import re
 from nltk import PorterStemmer
 porter = PorterStemmer()
 
-stopwords_file_name = "ttds_2023_english_stop_words.txt"
+stopwords_file_name = "stopwords/ttds_2023_english_stop_words.txt"
 
 with open(stopwords_file_name, "r") as f:
     stopwords = f.read().splitlines()
