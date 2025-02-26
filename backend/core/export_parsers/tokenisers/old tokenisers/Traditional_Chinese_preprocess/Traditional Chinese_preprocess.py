@@ -1,30 +1,17 @@
 import pandas as pd
 import jieba
 import jieba.analyse
-import re
 from sentence_transformers import SentenceTransformer
-from symspellpy import SymSpell, Verbosity
 
 # stopwords
-def load_stopwords(filepath="jeiba/stop_words.txt"):
+def load_stopwords(filepath="stop_words.txt"):
     with open(filepath, "r", encoding="utf-8") as f:
         stopwords = set(f.read().splitlines())
     return stopwords
 
-# correct wrong spelling
-def correct_spelling(text, sym_spell):
-    corrected_words = []
-    words = jieba.lcut(text)  # jieba tokenize
-
-    for word in words:
-        suggestions = sym_spell.lookup(word, Verbosity.CLOSEST, max_edit_distance=2)
-        corrected_words.append(suggestions[0].term if suggestions else word)
-
-    return "".join(corrected_words)
-
 # initialize jieba
-jieba.set_dictionary("jeiba/dict.txt.big")  # Traditional Chinese dic
-jieba.analyse.set_idf_path("jeiba/idf.txt.big")  # TF-IDF use
+jieba.set_dictionary("dict.txt.big")  # Traditional Chinese dic
+jieba.analyse.set_idf_path("idf.txt.big")  # TF-IDF use
 
 # jieba tokenizer for search engine use
 def jieba_tokenizer(text, stopwords):
@@ -57,16 +44,6 @@ def compute_sentence_embedding(texts):
     embeddings = model.encode(texts)
     return embeddings
 
-# read csv file
-# def read_csv_file(filepath):
-#     df = pd.read_csv(filepath)
-
-#     if "message" not in df.columns or "is_media" not in df.columns:
-#         raise ValueError("CSV should have included 'message' and 'is_media' col")
-
-#     text_df = df[df["is_media"] == False][["message"]].dropna().astype(str)
-
-#     return text_df
 def read_csv_file(filepath):
     df = pd.read_csv(filepath)
     
@@ -108,9 +85,8 @@ def preprocess_messages(df, stopwords):
 
     return processed_df
 
-input_csv_path = "jeiba/chatlog_latestneeeew.csv"  # input csv
-#input_csv_path ='chatlog_latestneeeew1.csv'
-output_csv_path = "jeiba/processed_chatlog.csv"  # output csv
+input_csv_path = "LINE_chatlog.csv"  # input csv
+output_csv_path = "LINE_processed_chatlog.csv"  # output csv
 
 # read csv
 print("read csv file")
@@ -118,7 +94,7 @@ df = read_csv_file(input_csv_path)
 
 print("loading stopwords")
 # stopwords
-stopwords = load_stopwords("jeiba/stop_words.txt")
+stopwords = load_stopwords("stop_words.txt")
 
 # pre-processing
 print("pre-processing text messages")
