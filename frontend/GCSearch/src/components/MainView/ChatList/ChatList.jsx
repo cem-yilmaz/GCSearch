@@ -22,29 +22,58 @@ const ChatList = () => {
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({platform: selectedPlatform})
+                    body: JSON.stringify({ platform: selectedPlatform })
                 });
+        
+                if (!chatIdsResponse.ok) {
+                    throw new Error(`Failed to fetch chat IDs: ${chatIdsResponse.statusText}`);
+                }
+            
                 const chatIds = await chatIdsResponse.json();
-
+        
                 // get details for each chat ID
                 const chatsData = await Promise.all(chatIds.map(async (chatId) => {
-                    const chatInfoResponse = await fetch(`${API_URL}/GetInfoForGroupChat`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ chat_name: chatId })
-                    });
-                    const chatInfo = await chatInfoResponse.json();
-
-                    //format data
-                    return {
-                        internal_chat_name: chatId,
-                        ChatName: chatInfo.display_name,
-                        last_message: chatInfo.last_message
-                    };
+                    try {
+                        const chatInfoResponse = await fetch(`${API_URL}/GetInfoForGroupChat`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ chat_name: chatId })
+                        });
+        
+                        if (!chatInfoResponse.ok) {
+                            throw new Error(`Failed to fetch info for ${chatId}: ${chatInfoResponse.statusText}`);
+                        }
+        
+                        const chatInfo = await chatInfoResponse.json();
+        
+                        // Check if the server returned an error in JSON
+                        if (chatInfo.error) {
+                            return {
+                                internal_chat_name: chatId,
+                                ChatName: `Error: ${chatInfo.error}`,
+                                last_message: null
+                            };
+                        }
+        
+                        // Otherwise, format normal data
+                        return {
+                            internal_chat_name: chatId,
+                            ChatName: chatInfo.display_name,
+                            last_message: chatInfo.last_message
+                        };
+                    } catch (error) {
+                        console.error(`Error fetching info for chatId ${chatId}:`, error);
+                        // Return a fallback chat object
+                        return {
+                            internal_chat_name: chatId,
+                            ChatName: `Error retrieving info for chat ID: ${chatId}`,
+                            last_message: null
+                        };
+                    }
                 }));
-
+        
                 setGroupChats(chatsData);
             } catch (error) {
                 console.error(`Error fetching group chats: ${error}`);
@@ -55,13 +84,7 @@ const ChatList = () => {
 
         fetchGroupChats();
     }, [selectedPlatform]);
-
-    
-
-    const handlePlatformChange = (platform) => {
-        setSelectedPlatform(platform);
-    }
-
+        
     return (
         <div className="ChatList">
             <PlatformSelector />
@@ -69,12 +92,12 @@ const ChatList = () => {
                 {isLoading ? (
                     <p>Loading chats...</p>
                 ) : (
-                    groupChats.map((groupchat, index) => {
+                    groupChats.map((groupchat, index) => (
                         <GroupChat
                             key={index}
                             groupchat={groupchat}
                         />
-                    })
+                    ))
                 )}
             </div>
         </div>

@@ -104,7 +104,11 @@ def flask_getLastMessageFromChat(chat_name:str) -> dict:
     """
     with open(f'core/out/chatlogs/{chat_name}.chatlog.csv', 'r') as f:
         reader = csv.reader(f)
-        last_message = [row for row in reader][1]
+        rows = [row for row in reader]
+        if len(rows) > 1:
+            last_message = rows[1]
+        else:
+            return {"sender": "Error", "message": "No messages found", "timestamp": 0}
         return {"sender": last_message[2], "message": last_message[3], "timestamp": int(last_message[1])}
     
 @app.route('/api/GetInfoForGroupChat', methods=['POST'])
@@ -117,11 +121,18 @@ def flask_getInfoForGroupChat():
     Returns:
         chat_info: (dict) { "display_name": str, "last_message": { "sender": str, "message": str, "timestamp": int } }
     """
-    data = request.get_json()
-    chat_name = data['chat_name']
-    display_name = flask_getDisplayNameFromChat(chat_name)
-    last_message = flask_getLastMessageFromChat(chat_name)
-    return jsonify({"display_name": display_name, "last_message": last_message})
+    try:
+        data = request.get_json()
+        chat_name = data['chat_name']
+        display_name = flask_getDisplayNameFromChat(chat_name)
+        last_message = flask_getLastMessageFromChat(chat_name)
+        return jsonify({"display_name": display_name, "last_message": last_message})
+    except FileNotFoundError as e:
+        print(f"DEBUG: FILENOTFOUND ERROR with chat {chat_name} {str(e)}")
+        return jsonify({"error": f"Could not find file for chat {chat_name}"}), 404
+    except Exception as e:
+        print(f"DEBUG: OTHER ERROR with chat {chat_name} {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 # Searching
 @app.route('/api/GetTopNResultsFromSearch', methods=['POST'])
