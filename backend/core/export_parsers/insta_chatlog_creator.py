@@ -303,7 +303,7 @@ class InstaChatlogCreator:
                     sender = self.decode_special_characters(message['sender_name'])
                     time = message['timestamp_ms']
                     if 'content' in message:
-                        message_content = self.decode_special_characters(message['content'])
+                        message_content = self.decode_special_characters(message['content']).replace('\n', ' ')
                     else:
                         message_content = '' # this likely means we have media
                     # check if the message is a system message
