@@ -73,6 +73,19 @@ const ChatList = () => {
                         };
                     }
                 }));
+
+                // sort chats by timestamp descending
+                chatsData.sort((a, b) => {
+                    if (a.last_message && b.last_message) {
+                        return b.last_message.timestamp - a.last_message.timestamp;
+                    } else if (a.last_message) {
+                        return -1;
+                    } else if (b.last_message) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                });
         
                 setGroupChats(chatsData);
             } catch (error) {
