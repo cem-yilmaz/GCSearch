@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
-from .core.search import Searcher
+from core.search import Searcher
 
 import os
 import csv
@@ -152,8 +152,8 @@ def flask_GetTopNResultsFromSearch():
     data = request.get_json()
     query = data['query'] 
     n = data['n'] 
-    #top_n_results = core.GetTopNResultsFromSearch(pii_name, query, n)
-    #return jsonify(top_n_results)
+    top_n_results = searcher.flask_search(query, n)
+    return jsonify(top_n_results)
 
 @app.route('/api/GetMetaChatDataFromPIIName', methods=['POST'])
 def flask_GetMetaChatDataFromPIIName():

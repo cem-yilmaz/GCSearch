@@ -1,4 +1,4 @@
-from tokenisers.ttds_tokeniser import Tokeniser
+from .tokenisers.ttds_tokeniser import Tokeniser
 import pickle
 import os
 import math
@@ -23,7 +23,8 @@ class Searcher():
             pii_name (str): The name of the PII to load. If you wish to open `<chatname>.pii.pkl`, pass in `<chatname>`.
             pii_dir (str): The directory in which the PII is stored. Default is `piis`.
         """
-        pii_path = f"{pii_dir}/{pii_name}.pii.pkl"
+        relative_pii_dir = os.path.join(os.path.dirname(__file__), pii_dir)
+        pii_path = f"{relative_pii_dir}/{pii_name}.pii.pkl"
         with open(pii_path, "rb") as f:
             pii = pickle.load(f)
             f.close()
@@ -97,8 +98,11 @@ class Searcher():
         Returns:
             (list[tuple[str, str, float]]) A list of the top N results for all PIIs in the format `(pii_name, docNo, score)`.
         """
+        # make sure we're preserving the path to piis to be relative to where search.py is
+        pii_dir = os.path.join(os.path.dirname(__file__), input_dir)
+        print(f"DEBUG: Searching in {pii_dir}")
         results = []
-        for pii_file in os.listdir(input_dir):
+        for pii_file in os.listdir(pii_dir):
             if pii_file.endswith(".pii.pkl"):
                 pii_name = pii_file.split(".")[0]
                 pii = self.load_pii(pii_name)
@@ -133,13 +137,14 @@ class Searcher():
             out_dir (str): The directory in which the chatlogs are stored. Default is `out`.
         """
         internal_chatname, docNo, _ = search_result
+        relative_out_dir = os.path.join(os.path.dirname(__file__), out_dir)
         # First we need the proper chatname. This can be found at out_dir/info/<internal_chatname>.info.csv, under the "Display name" column
-        info_path = f"{out_dir}/info/{internal_chatname}.info.csv"
+        info_path = f"{relative_out_dir}/info/{internal_chatname}.info.csv"
         with open(info_path, "r") as f:
             chatname = f.readlines()[1].split(",")[1]
             f.close()
         # Now we can get the remaining information by reading the chatlog, at out_dir/chatlogs/<internal_chatname>.chatlog.csv
-        chatlog_path = f"{out_dir}/chatlogs/{internal_chatname}.chatlog.csv"
+        chatlog_path = f"{relative_out_dir}/chatlogs/{internal_chatname}.chatlog.csv"
         with open(chatlog_path, "r") as f:
             chatlog = f.readlines()
             f.close()
@@ -156,7 +161,7 @@ class Searcher():
             reactions = ""
         return f"({chatname}) [{date}] {sender}: {text}\n{reactions}"
     
-    def flask_get_message_from_search_result(self, search_result:tuple[str, str, float], out_dir="out") -> dict:
+    def flask_get_message_details_from_search_result(self, search_result:tuple[str, str, float], out_dir="out") -> dict:
         """
         Given a search result, returns the message in a dictionary. 
 
@@ -167,13 +172,9 @@ class Searcher():
             (dict): Returns the following fields:
             ```
             {
-                "chatName": internal_chatname,
-                "platform": the platform of the chat,
-                "message_details" : {
-                    "message": the message,
-                    "sender": the sender of the message,
-                    "timestamp": the unix timestamp of the message,
-                }
+                "message": the message,
+                "sender": the sender of the message,
+                "timestamp": the unix timestamp of the message,
             }
             ```
         """
@@ -223,7 +224,7 @@ class Searcher():
         platform = chatName.split("__")[0]
         if platform not in ["instagram", "whatsapp", "line", "wechat"]:
             platform = "whatsapp" # fallback
-        message_details = self.flask_get_message_from_search_result(search_result, out_dir)
+        message_details = self.flask_get_message_details_from_search_result(search_result, out_dir)
         return {
             "chatName": chatName,
             "platform": platform,
@@ -244,7 +245,7 @@ class Searcher():
             (list[str]) A list of the top `n` messages that match the query.
         """
         results = self.search_all_piis_in_folder(query, top_n=n)
-        messages = [self.flask_get_message_from_search_result(result) for result in results]
+        messages = [self.flask_get_message_data(result) for result in results]
         return messages[:n]
 
 
