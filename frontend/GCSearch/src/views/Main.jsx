@@ -25,13 +25,14 @@ const Main = () => {
         
         checkServer();
     }, []);
+
+    console.log(`Server status: ${serverStatus}`);
     
     return (
         <>
             <ChatList />
             <div className="central-container">
                 <h1>GCSearch</h1>
-                <p>Server status: {serverStatus}</p>
                 <SearchBar />
                 <MainChatWindow />
             </div>

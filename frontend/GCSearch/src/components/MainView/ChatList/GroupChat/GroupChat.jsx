@@ -28,7 +28,7 @@ const GroupChat = (
     }
 ) => {
     return (
-        <div className="group-chat">
+        <div className="group-chat" title={message}>
             <div className="group-chat-top">
                 <h3><span className="chatname">{ChatName}</span></h3>
                 <p><span className="date">{getDateFromTimestamp(timestamp)}</span></p>

@@ -138,10 +138,9 @@ def flask_getInfoForGroupChat():
 @app.route('/api/GetTopNResultsFromSearch', methods=['POST'])
 def flask_GetTopNResultsFromSearch():
     """
-    Gets the top N results from a search query for a given positional inverted index.
+    Gets the top N results from a search query for all PIIs.
 
     Args:
-        pii_name: (str) name of the positional inverted index. If the PII is called "`<pii_name>`.pii.txt", then `<pii_name>` is "pii".
         query: (str) search query
         n: (int) number of results to return. If n > number of docs m, return m results.
 
@@ -149,7 +148,6 @@ def flask_GetTopNResultsFromSearch():
         top_n_results: (dict) { doc_id (int): score (int):, ... }
     """
     data = request.get_json()
-    pii_name = data['pii_name'] 
     query = data['query'] 
     n = data['n'] 
     #top_n_results = core.GetTopNResultsFromSearch(pii_name, query, n)
