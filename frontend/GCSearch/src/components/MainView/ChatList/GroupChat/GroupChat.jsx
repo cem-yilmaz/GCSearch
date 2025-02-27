@@ -2,6 +2,18 @@ import React from "react";
 
 import "./GroupChat.css";
 
+const getDateFromTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toDateString();
+}
+
+const getTimeFromTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+}
+
+
+
 const GroupChat = (
     {
         groupchat : {
@@ -10,8 +22,7 @@ const GroupChat = (
             last_message : {
                 message,
                 sender,
-                date,
-                time
+                timestamp
             }
         }
     }
@@ -20,10 +31,10 @@ const GroupChat = (
         <div className="group-chat">
             <div className="group-chat-top">
                 <h3><span className="chatname">{ChatName}</span></h3>
-                <p><span className="date">{date}</span></p>
+                <p><span className="date">{getDateFromTimestamp(timestamp)}</span></p>
             </div>
             <div className="group-chat-bottom">
-                <p><span className="time">[{time}]</span> <span className="sender">{sender}: </span></p>
+                <p><span className="time">[{getTimeFromTimestamp(timestamp)}]</span> <span className="sender">{sender}: </span></p>
                 <p><span className="message"><i>{message}</i></span></p>
             </div>
         </div>

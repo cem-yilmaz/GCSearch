@@ -7,7 +7,22 @@ import SearchBar from "../components/MainView/SearchBar/SearchBar";
 
 import "./Main.css";
 
+const API_URL = "http://localhost:5000/api";
+
+const canConnectToServer = async () => {
+    try {
+        const response = await fetch(`${API_URL}/isAlive`);
+        return response.status;
+    } catch (error) {
+        console.error(`Error connecting to server: ${error}`);
+        return false;
+    } finally {
+        
+    }
+}
+
 const Main = () => {
+    console.log(`Can connect to server: ${canConnectToServer()}`);
     return (
         <>
             <ChatList />

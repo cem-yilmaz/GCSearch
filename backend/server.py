@@ -1,9 +1,13 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
-from core import *
+from flask_cors import CORS, cross_origin
+
+import os
+import csv
+import datetime
 
 app = Flask(__name__)
 CORS(app)
+
 
 currently_supported_platforms = [
     "instagram",
@@ -18,8 +22,109 @@ currently_supported_languages = [
     "zh-tw", # Traditional Chinese
 ]
 
+@app.route('/api/isAlive', methods=['GET'])
+def flask_isAlive():
+    """
+    Simple function to check if the server is alive.
+    """
+    return jsonify({"status": "alive"})
+
+def flask_getAllParsedChats() -> list[str]:
+    """
+    Gets the internal chat names from all the parsed chats, located within the `core/out/*` directories.
+
+    Returns:
+        parsed_chats: (list[str]) list of internal chat names (e.g. ["chat_1", "chat_2", ...])
+    """
+    parsed_chats = []
+    for filename in os.listdir('core/out/info/'):
+        if filename.endswith('.csv'):
+            parsed_chats.append(filename.split('.')[0])
+    return parsed_chats
+
+def flask_sortChatsByPlatform() -> dict[str, list[str]]:
+    """
+    Sorts the internal chat names by platform. Returns a dictionary in the format:
+    ```
+    {
+        "instagram": ["chat_1", "chat_2", ...],
+        "whatsapp": ["chat_3", "chat_4", ...],
+        ...
+    }
+    ```
+    """
+    sorted_chats = {}
+    for groupchat in flask_getAllParsedChats():
+        platform = groupchat.split('_')[0]
+        if platform not in sorted_chats:
+            sorted_chats[platform] = []
+        sorted_chats[platform].append(groupchat)
+    return sorted_chats
+
+@app.route('/api/GetAllParsedChatsForPlatform', methods=['POST'])
+def flask_getAllParsedChatsForPlatform():
+    """
+    Gets all the parsed chats for a given platform.
+
+    Args:
+        platform: (str) the name of the platform (e.g. "instagram", "whatsapp", "wechat", "line")
+    Returns:
+        parsed_chats: (list[str]) list of internal chat names (e.g. ["chat_1", "chat_2", ...])
+    """
+    data = request.get_json()
+    platform = data['platform']
+    sorted_chats = flask_sortChatsByPlatform()
+    if platform not in sorted_chats:
+        return jsonify({"error": f"Platform \"{platform}\" not supported. Currently supported platforms are: {currently_supported_platforms}"})
+    return jsonify(sorted_chats[platform])
+
+# Rendering individual groupchats from ChatList
+def flask_getDisplayNameFromChat(chat_name:str) -> str:
+    """
+    Given an internal `chat_name`, gets the display name of the chat.
+
+    Args:
+        chat_name: (str) the internal chat name (e.g. "chat_1")
+    Returns:
+        display_name: (str) the display name of the chat
+    """
+    with open(f'core/out/info/{chat_name}.info.csv', 'r') as f:
+        reader = csv.reader(f)
+        display_name = [row for row in reader][1][1]
+        return display_name
+
+def flask_getLastMessageFromChat(chat_name:str) -> dict:
+    """
+    Given an internal `chat_name`, finds the latest message sent to that chat and returns the sender, message, and timestamp.
+
+    Args:
+        chat_name: (str) the internal chat name (e.g. "chat_1")
+    Returns:
+        last_message: (dict) { "sender": str, "message": str, "timestamp": int }
+    """
+    with open(f'core/out/chatlogs/{chat_name}.chatlog.csv', 'r') as f:
+        reader = csv.reader(f)
+        last_message = [row for row in reader][1]
+        return {"sender": last_message[2], "message": last_message[3], "timestamp": int(last_message[1])}
+    
+@app.route('/api/GetInfoForGroupChat', methods=['POST'])
+def flask_getInfoForGroupChat():
+    """
+    Gets the display name and last message for a given chat.
+
+    Args:
+        chat_name: (str) the internal chat name (e.g. "chat_1")
+    Returns:
+        chat_info: (dict) { "display_name": str, "last_message": { "sender": str, "message": str, "timestamp": int } }
+    """
+    data = request.get_json()
+    chat_name = data['chat_name']
+    display_name = flask_getDisplayNameFromChat(chat_name)
+    last_message = flask_getLastMessageFromChat(chat_name)
+    return jsonify({"display_name": display_name, "last_message": last_message})
+
 # Searching
-@app.route('/GetTopNResultsFromSearch', methods=['POST'])
+@app.route('/api/GetTopNResultsFromSearch', methods=['POST'])
 def flask_GetTopNResultsFromSearch():
     """
     Gets the top N results from a search query for a given positional inverted index.
@@ -39,7 +144,7 @@ def flask_GetTopNResultsFromSearch():
     #top_n_results = core.GetTopNResultsFromSearch(pii_name, query, n)
     #return jsonify(top_n_results)
 
-@app.route('/GetMetaChatDataFromPIIName', methods=['POST'])
+@app.route('/api/GetMetaChatDataFromPIIName', methods=['POST'])
 def flask_GetMetaChatDataFromPIIName():
     """
     Gets the metadata (Internal Chat Name, Display name, Participants) from a given positional inverted index. Returns a dictionary e.g.
@@ -103,7 +208,7 @@ def flask_getChatDataFromDocIDGivenPIIName(doc_id:int, pii_name:str) -> dict:
     """
     pass
 
-@app.route('/GetChatsBetweenRangeForChatGivenPIIName', methods=['POST'])
+@app.route('/api/GetChatsBetweenRangeForChatGivenPIIName', methods=['POST'])
 def flask_GetChatsBetweenRangeForGC():
     """
     Gets 2n+1 chats around a given chat in a GC given a PII name. Calls `getChatDataFromDocIDGivenPIIName` for each chat, so returns a list of dictionaries (in the format described in that function).
@@ -157,7 +262,7 @@ def flask_GetChatsBetweenRangeForGC():
 
     return jsonify(chats)
 
-@app.route('/CreateChatlogFromExport', methods=['POST'])
+@app.route('/api/CreateChatlogFromExport', methods=['POST'])
 def flask_CreateChatlogFromExports():
     """
     Calls the internal export -> chatlog function for a given social media platform. Will create the directories `core/out/info/` and `core/out/chatlogs/` (if they do not exist) and populate them with the export data. This data is located in the `export/<platform_name>/` directory.
