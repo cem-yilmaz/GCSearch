@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
+from .core.search import Searcher
 
 import os
 import csv
@@ -8,6 +9,7 @@ import datetime
 app = Flask(__name__)
 CORS(app)
 
+searcher = Searcher()
 
 currently_supported_platforms = [
     "instagram",

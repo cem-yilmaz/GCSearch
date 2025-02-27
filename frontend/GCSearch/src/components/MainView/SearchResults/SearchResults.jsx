@@ -22,6 +22,42 @@ const exampleResults = [
             sender: "User2",
             timestamp: 1620004444400
         }
+    },
+    {
+        chatName: "Chat 2",
+        platform: "whatsapp",
+        message_details: {
+            message: "Hi, there!",
+            sender: "User2",
+            timestamp: 1620004444400
+        }
+    },
+    {
+        chatName: "Chat 2",
+        platform: "whatsapp",
+        message_details: {
+            message: "Hi, there!",
+            sender: "User2",
+            timestamp: 1620004444400
+        }
+    },
+    {
+        chatName: "Chat 2",
+        platform: "whatsapp",
+        message_details: {
+            message: "Hi, there!",
+            sender: "User2",
+            timestamp: 1620004444400
+        }
+    },
+    {
+        chatName: "Chat 2",
+        platform: "whatsapp",
+        message_details: {
+            message: "Hi, there!",
+            sender: "User2",
+            timestamp: 1620004444400
+        }
     }
 ];
 

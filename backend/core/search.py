@@ -2,6 +2,7 @@ from tokenisers.ttds_tokeniser import Tokeniser
 import pickle
 import os
 import math
+import re
 from datetime import datetime
 
 class Searcher():
@@ -154,6 +155,39 @@ class Searcher():
         else:
             reactions = ""
         return f"({chatname}) [{date}] {sender}: {text}\n{reactions}"
+    
+    def flask_get_message_from_search_result(self, search_result:tuple[str, str, float], out_dir="out") -> dict:
+        """
+        Given a search result, returns the message in a dictionary. 
+
+        Args:
+            search_result (tuple[str, str, float]): The search result to get the message for (in the format `(chatname, docNo, score)`).
+            out_dir (str): The directory in which the chatlogs are stored. Default is `out`.
+        Returns:
+            (dict): Returns the following fields:
+            ```
+            {
+                "chatName": internal_chatname,
+                "platform": the platform of the chat,
+                "message_details" : {
+                    "message": the message,
+                    "sender": the sender of the message,
+                    "timestamp": the unix timestamp of the message,
+                }
+            }
+            ```
+        """
+        # we cheat a bit by using the get_message_from_search_result function parsing the information that we need
+        message = self.get_message_from_search_result(search_result, out_dir)
+        message_regex = r"\((?P<chatName>.+)\) \[(?P<timestamp>.+)\] (?P<sender>.+): (?P<message>.+)(?:\n(?P<reactions>.+))?" # this may need to be improved to handle other characters
+        match = re.match(message_regex, message)
+        if not match:
+            input(f"Error parsing message: {message}")
+        return {
+            "message": match.group("message"),
+            "sender": match.group("sender"),
+            "timestamp": match.group("timestamp"),
+        }
 
     def search(self, query:str) -> None:
         """
@@ -163,6 +197,55 @@ class Searcher():
         for result in results:
             message = self.get_message_from_search_result(result)
             print(message)
+
+    def flask_get_message_data(self, search_result:tuple[str, str, float], out_dir="out") -> dict:
+        """
+        Given a search result (`chatname`, `docNo`, `score`), returns the message data in a dictionary. 
+
+        Args:
+            search_result (tuple[str, str, float]): The search result to get the message for (in the format `(chatname, docNo, score)`).
+            out_dir (str): The directory in which the chatlogs are stored. Default is `out`.
+        Returns:
+            (dict): Returns the following fields:
+            ```
+            {
+                "chatName": internal_chatname,
+                "platform": the platform of the chat,
+                "message_details" : {
+                    "message": the message,
+                    "sender": the sender of the message,
+                    "timestamp": the unix timestamp of the message,
+                }
+            }
+            ```
+        """
+        chatName = search_result[0]
+        platform = chatName.split("__")[0]
+        if platform not in ["instagram", "whatsapp", "line", "wechat"]:
+            platform = "whatsapp" # fallback
+        message_details = self.flask_get_message_from_search_result(search_result, out_dir)
+        return {
+            "chatName": chatName,
+            "platform": platform,
+            "message_details": message_details
+        }
+        
+
+    # now for the functions that will be used in the api
+    def flask_search(self, query:str, n:int=50) -> list[str]:
+        """
+        Searches for the query in all PIIs in the `piis` directory.
+
+        Args:
+            query (str): The query to search for.
+            n (int): The number of results to return. Default is 50.
+
+        Returns:
+            (list[str]) A list of the top `n` messages that match the query.
+        """
+        results = self.search_all_piis_in_folder(query, top_n=n)
+        messages = [self.flask_get_message_from_search_result(result) for result in results]
+        return messages[:n]
 
 
 s = Searcher() # delete this line
