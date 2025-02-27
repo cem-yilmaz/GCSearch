@@ -174,4 +174,4 @@ cython_debug/
 backend/core/export/**/*.zip
 backend/core/insta_raw_message_data
 backend/core/out/**/*.csv
-backend/core/piis/*.txt
+backend/core/piis/*.pkl
