@@ -5,7 +5,7 @@ from pathlib import Path
 import concurrent.futures
 from functools import reduce
 import math
-from time import time
+import pickle
 
 class PIIConstructor:
     """
@@ -90,6 +90,19 @@ class PIIConstructor:
         # Merge results
         return self._merge_indexes(results)
     
+    def pickle_pii(self, pii:dict, output_file:str) -> None:
+        """
+        Pickles a PII to a file.
+
+        Args:
+            pii (dict): The PII to be pickled.
+            output_file (str): The output file path to pickle the PII to.
+        """
+        if pii is not None:
+            with open(output_file, "wb") as f:
+                pickle.dump(pii, f)
+                f.close()
+    
     def write_pii_to_txt(self, pii:dict, output_file:str) -> None:
         """
         Writes a PII to a TXT file. The file is in the format
@@ -114,7 +127,7 @@ class PIIConstructor:
 
     def create_pii_from_csv(self, csv_file_path:str, output_dir:str="piis") -> None:
         """
-        Creates a PII from the given `chatlog.csv` file, and writes it to a TXT file.
+        Creates a PII from the given `chatlog.csv` file, and pickles it.
 
         If the chatlog.csv file is named `<chatname>.chatlog.csv`, the PII will be written to `<chatname>.pii.txt`.
 
@@ -127,12 +140,18 @@ class PIIConstructor:
         except NameError:
             script_dir = Path(os.path.abspath('backend/core'))
 
-        chatname = csv_file_path.split("/")[-1]
+        # if the output directory does not exist, create it
+        output_path = script_dir / output_dir
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+
+        csv_basename = os.path.basename(csv_file_path)
+        chatname = csv_basename.replace(".chatlog.csv", "")
         
-        output_path = script_dir / output_dir / f"{chatname}.pii.txt"
+        output_path = script_dir / output_dir / f"{chatname}.pii.pkl"
 
         pii = self.build_pii_from_csv(csv_file_path)
-        self.write_pii_to_txt(pii, output_path)
+        self.pickle_pii(pii, output_path)
 
     def create_piis_from_folder(self, input_dir:str="out/chatlogs", output_dir:str="piis") -> None:
         """
@@ -158,8 +177,6 @@ class PIIConstructor:
         for i in range(num_logs):
             file = chatlogs[i]
             if file.endswith(".chatlog.csv"):
-                print(f"Processing {file} ({i+1}/{num_logs})", end="\r")
+                print(f"Processing {file} ({i+1}/{num_logs})")
                 self.create_pii_from_csv(str(input_path / file), str(output_path))
-
-
-p = PIIConstructor() # DELETE THIS LINE
+                print()
