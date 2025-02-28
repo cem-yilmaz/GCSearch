@@ -25,7 +25,7 @@ def GetMetaChatDataFromPIIName(pii_name):
     chatname = parts[1]  # We'll use this for matching the metadata row.
     
     # Construct the metadata file path using double underscores.
-    BASEPATH="/Users/hebekuo/GCSearch/backend/core/out/info/"
+    BASEPATH="/backend/core/out/info/"
     metadata_file = os.path.join(BASEPATH, f"{platform}__{chatname}.info.csv")
     
     if not os.path.exists(metadata_file):
@@ -56,9 +56,5 @@ def flask_GetMetaChatDataFromPIIName():
     metadata = GetMetaChatDataFromPIIName(pii_name)
     return jsonify(metadata)
 
-# For testing the function directly (outside of Flask):
-if __name__ == "__main__":
-    pii_output = '/Users/hebekuo/GCSearch/backend/core/piis/line__1號群.pii.pkl'
-    print(GetMetaChatDataFromPIIName(pii_output))
 
 
