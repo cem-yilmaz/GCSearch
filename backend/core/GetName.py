@@ -15,8 +15,8 @@ def GetMetaChatDataFromPIIName(pii_name):
     if not filename.endswith(".pii.pkl"):
         return {}
     
-    # Remove the extension and split on "__"
-    base_name = filename.replace(".pii.pkl", "")  # e.g., "line__Chat 2"
+    # remove the extension and split on "__"
+    base_name = filename.replace(".pii.pkl", "")  # e.g., "<platform>__<chatname>"
     parts = base_name.split("__")
     if len(parts) < 2:
         return {}
@@ -24,7 +24,7 @@ def GetMetaChatDataFromPIIName(pii_name):
     platform = parts[0]
     chatname = parts[1]  # We'll use this for matching the metadata row.
     
-    # Construct the metadata file path using double underscores.
+    # construct the metadata file path using double underscores.
     BASEPATH="/backend/core/out/info/"
     metadata_file = os.path.join(BASEPATH, f"{platform}__{chatname}.info.csv")
     
@@ -49,7 +49,7 @@ def GetMetaChatDataFromPIIName(pii_name):
                 }
     return {}
 
-# Flask endpoint
+# flask endpoint
 def flask_GetMetaChatDataFromPIIName():
     data = request.get_json()
     pii_name = data.get("pii_name", "")
