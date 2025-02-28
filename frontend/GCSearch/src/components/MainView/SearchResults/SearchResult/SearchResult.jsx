@@ -13,6 +13,10 @@ const getTimeFromTimestamp = (timestamp) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 }
 
+const getTitle = (sender, message) => {
+    return `${sender}: ${message}`;
+}
+
 const SearchResult = (
     {
         chatName,
@@ -29,7 +33,7 @@ const SearchResult = (
             <div className="platform-image">
                 <img src={`assets/platform_logos/${platform}.png`} alt={platform} />
             </div>
-            <div className="message-details" title={message}>
+            <div className="message-details" title={getTitle(sender, message)}>
                 <div className="message-top">
                     <h3><span className="chatname">{chatName}</span></h3>
                     <p><span className="date">{getDateFromTimestamp(timestamp)}</span></p>

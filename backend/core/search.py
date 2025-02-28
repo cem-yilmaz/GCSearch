@@ -49,8 +49,8 @@ class Searcher():
         
         avgdl = sum(doc_lengths.values()) / N if N > 0 else 0
 
-        k1 = 1.5
-        b = 0.75
+        k1 = 0.75 # default - 1.2
+        b = 0.75 # default - 0.75
         scores = {}
 
         for token in tokens:
@@ -137,6 +137,22 @@ class Searcher():
             f.close()
         return display_name
     
+    def get_row_from_docno(self, docno:int, chatlog_path:str) -> str:
+        """
+        Given a docno, returns the row in the chatlog that corresponds to that docno.
+
+        Args:
+            docno (int): The docno to search for.
+            chatlog_path (str): The path to the chatlog to search in.
+        """
+        with open(chatlog_path, "r") as f:
+            chatlog = f.readlines()
+            f.close()
+        for row in chatlog:
+            if row.split(",")[0] == str(docno):
+                return row
+        return None
+    
     def get_message_from_search_result(self, search_result:tuple[str, str, float], out_dir="out") -> str:
         """
         Given a search result, returns the message.
@@ -163,9 +179,7 @@ class Searcher():
         with open(chatlog_path, "r") as f:
             chatlog = f.readlines()
             f.close()
-        # Now we can get the message
-        message = [msg for msg in chatlog if msg.split(",")[0] == docNo][0].split(",")
-        #print(f"DEBUG: {message}")
+        message = self.get_row_from_docno(docNo, chatlog_path).split(",") # we should only really get one message here, so as a hack we just get the first
         date = self.convert_unix_timestamp_to_datetime(int(message[1]))
         sender = message[2]
         text = message[3]

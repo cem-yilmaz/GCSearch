@@ -193,7 +193,13 @@ def flask_getNumChatsInGC(GC_name:str) -> int:
     Returns:
         num_chats: (int) number of chats in the GC
     """
-    pass
+    with open(f'core/out/chatlogs/{GC_name}.chatlog.csv', 'r') as f:
+        reader = csv.reader(f)
+        num_chats = len([row for row in reader]) - 1
+        f.close()
+    return num_chats
+        
+    
 
 def flask_getChatDataFromDocIDGivenPIIName(doc_id:int, pii_name:str) -> dict:
     """
@@ -218,10 +224,12 @@ def flask_getChatDataFromDocIDGivenPIIName(doc_id:int, pii_name:str) -> dict:
         doc_id: (int) the document ID of the chat
         pii_name: (str) name of the positional inverted index. If the PII is called "`<pii_name>`.pii.txt", then `<pii_name>` is "pii".
     """
-    pass
+    # we already have this functionality in search.py
+    wrapper = (pii_name, doc_id, None)
+    return searcher.flask_get_message_details_from_search_result(wrapper)
 
 @app.route('/api/GetChatsBetweenRangeForChatGivenPIIName', methods=['POST'])
-def flask_GetChatsBetweenRangeForGC():
+def flask_GetChatsBetweenRangeForGC(include_media:bool=False):
     """
     Gets 2n+1 chats around a given chat in a GC given a PII name. Calls `getChatDataFromDocIDGivenPIIName` for each chat, so returns a list of dictionaries (in the format described in that function).
 
@@ -238,11 +246,18 @@ def flask_GetChatsBetweenRangeForGC():
     """
     data = request.get_json()
     doc_id = data['doc_id']
+    og_doc_id = doc_id
     n = data['n']
     pii_name = data['pii_name']
-    include_media = data['include_media']
-    GC_name = None #TODO: get the GC name from the PII name
-    num_chats_in_GC = flask_getNumChatsInGC(GC_name) # you will have to do some processing to get the GC name from the PII name
+    print(f"""
+    doc_id: {doc_id}
+    n: {n}
+    pii_name: {pii_name}
+    """)
+    if 'include_media' in data:
+        include_media = data['include_media']
+    GC_name = flask_getDisplayNameFromChat(pii_name)
+    num_chats_in_GC = flask_getNumChatsInGC(pii_name) # you will have to do some processing to get the GC name from the PII name
     chats = []
     # get the previous n chats
     chats_left_to_add = n
@@ -251,25 +266,34 @@ def flask_GetChatsBetweenRangeForGC():
         if doc_id < 0:
             break
         chat_data = flask_getChatDataFromDocIDGivenPIIName(doc_id, pii_name)
-        if chat_data['is_media'] and not include_media:
-            continue
+        #input(f"chat_data: {chat_data}")
+        # we current dont check for media messages
+        #if chat_data[9] and not include_media:
+        #    continue
         chats.append(chat_data)
+        print(f"added chat +1")
         chats_left_to_add -= 1
+    print("Added the previous n chats")
     # get the current chat
     chats_left_to_add = n+1 # reset to get n+1 more chats
     # now lets check the current chat
+    doc_id = og_doc_id
     chat_data = flask_getChatDataFromDocIDGivenPIIName(doc_id, pii_name)
-    if not chat_data['is_media'] or include_media:
-        chats.append(chat_data)
-        chats_left_to_add -= 1 # decrement to indicate we've added the current chat, otherwise we're getting n+1 ones ahead to make up for it
+    
+    chats.append(chat_data)
+    chats_left_to_add -= 1 # decrement to indicate we've added the current chat, otherwise we're getting n+1 ones ahead to make up for it
+    
+    # now we get the next n chats
+    chats_left_to_add = n
     while chats_left_to_add > 0:
         doc_id += 1
         if doc_id > num_chats_in_GC:
             break
         chat_data = flask_getChatDataFromDocIDGivenPIIName(doc_id, pii_name)
-        if chat_data['is_media'] and not include_media:
-            continue
+        #if chat_data['is_media'] and not include_media:
+        #    continue
         chats.append(chat_data)
+        print(f"added chat +1")
         chats_left_to_add -= 1
 
     return jsonify(chats)
