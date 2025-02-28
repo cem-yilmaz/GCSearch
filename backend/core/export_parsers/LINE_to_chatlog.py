@@ -155,7 +155,7 @@ for line in lines:
 with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
     writer = csv.writer(csvfile)
     writer.writerow([
-        "doc_id", "unix_time", "sender", "message", "isReply", "who_replied_to",
+        "docNo", "time", "sender", "message", "isReply", "who_replied_to",
         "has_reactions", "reactions", "translated", "is_media", "is_OCR", "local_url", "remote_url"
     ])
     writer.writerows(messages)
