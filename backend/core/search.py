@@ -178,7 +178,7 @@ class Searcher():
             }
             ```
         """
-        # we cheat a bit by using the get_message_from_search_result function parsing the information that we need
+        # we cheat a bit by using the get_message_from_search_result function parsing the information that we need using regex
         message = self.get_message_from_search_result(search_result, out_dir)
         message_regex = r"\((?P<chatName>.+)\) \[(?P<timestamp>.+)\] (?P<sender>.+): (?P<message>.+)(?:\n(?P<reactions>.+))?" # this may need to be improved to handle other characters
         match = re.match(message_regex, message)

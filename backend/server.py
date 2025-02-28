@@ -153,6 +153,7 @@ def flask_GetTopNResultsFromSearch():
     query = data['query'] 
     n = data['n'] 
     top_n_results = searcher.flask_search(query, n)
+    print(f"DEBUG: got {len(top_n_results)} results for query \"{query}\"")
     return jsonify(top_n_results)
 
 @app.route('/api/GetMetaChatDataFromPIIName', methods=['POST'])
