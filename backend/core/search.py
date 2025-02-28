@@ -122,6 +122,21 @@ class Searcher():
         """
         return datetime.fromtimestamp(timestamp / 1000.0).strftime('%Y-%m-%d %H:%M:%S')
     
+    def get_display_name_from_chatname(self, chatname:str, out_dir="out") -> str:
+        """
+        Given an internal chatname, returns the display name of the chat.
+
+        Args:
+            chatname (str): The internal chatname to get the display name for.
+            out_dir (str): The directory in which the info files are stored. Default is `out`.
+        """
+        relative_out_dir = os.path.join(os.path.dirname(__file__), out_dir)
+        info_path = f"{relative_out_dir}/info/{chatname}.info.csv"
+        with open(info_path, "r") as f:
+            display_name = f.readlines()[1].split(",")[1]
+            f.close()
+        return display_name
+    
     def get_message_from_search_result(self, search_result:tuple[str, str, float], out_dir="out") -> str:
         """
         Given a search result, returns the message.
@@ -220,9 +235,11 @@ class Searcher():
             }
             ```
         """
-        chatName = search_result[0]
-        platform = chatName.split("__")[0]
+        internal_chat_name = search_result[0]
+        chatName = self.get_display_name_from_chatname(internal_chat_name)
+        platform = internal_chat_name.split("__")[0]
         if platform not in ["instagram", "whatsapp", "line", "wechat"]:
+            print(f"DEBUG ERROR: Unknown platform {platform}")
             platform = "whatsapp" # fallback
         message_details = self.flask_get_message_details_from_search_result(search_result, out_dir)
         return {

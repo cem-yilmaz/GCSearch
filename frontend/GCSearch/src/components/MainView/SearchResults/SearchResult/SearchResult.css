@@ -40,12 +40,31 @@
     text-overflow: ellipsis;
 }
 
+.message-top h3 {
+    margin: 0;
+    width: 50%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.message-top .date {
+    margin: 0;
+    width: 50%;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .message-top {
     height: 10px;
     margin-bottom: 0;
 }
 
-.message-bottom p {
+.message-bottom .message {
+    margin: 0;
+    width: auto;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

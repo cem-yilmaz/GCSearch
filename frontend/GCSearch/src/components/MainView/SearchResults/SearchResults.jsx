@@ -9,6 +9,7 @@ const SearchResults = ({ results = [], isLoading = false }) => {
         <div className="SearchResults">
             <h2>Search Results</h2>
 
+            <div className="actual-results">
             {isLoading ? (
                 <p className="loading">Searching...</p>
             ) : results.length > 0 ? (
@@ -19,6 +20,7 @@ const SearchResults = ({ results = [], isLoading = false }) => {
             ) : (
                 <p className="no-results">No results found</p>
             )}
+            </div>
         </div>
     )
 }
