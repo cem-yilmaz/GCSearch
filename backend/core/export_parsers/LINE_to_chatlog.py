@@ -4,11 +4,14 @@ import os
 from datetime import datetime
 
 # input file and output file
+BASE_PATH = "/GCSearch/" 
 input_file = "Line_chat.txt"  # input file
-output_file = "LINE_chatlog_main.csv"  # output file path
+platform="LINE"
+chatname="chat"
+output_file = os.path.join(BASE_PATH, "backend", "core", "out", "chatlogs", f"{platform}__{chatname}.chatlog.csv")  # output file path
 
-#  the format of the input file
-chat_id_pattern = re.compile(r"\[LINE\] Chat (\d+)")  # [LINE] Chat n
+# line chatroom pattern：capture [LINE] chatname pattern
+chat_id_pattern = re.compile(r"\[LINE\]\s+(.*)")
 
 # date patterns
 date_patterns = [
@@ -34,6 +37,13 @@ current_date = None
 last_sender = None
 last_message_index = None  
 
+# keep doc_id
+chat_counter = 0
+chat_rooms = {}  # format： { "doc_1": "chatname", ... }
+
+# create sender dic{}
+participants_by_chat = {}
+
 def convert_to_unix(date_str, time_str):
     """time/date transform Unix timestamp"""
     try:
@@ -42,32 +52,19 @@ def convert_to_unix(date_str, time_str):
     except ValueError:
         return None  
 
-# def detect_media(message):
-#     """check is_media (boolean True/ False)"""
-#     return any(keyword in message for keyword in media_keywords)
-
-
 def detect_media(message):
     """check is_media (boolean True/ False)"""
     if any(keyword in message for keyword in media_keywords):
         return True  
-
-    # find all url
     url_pattern = re.compile(r"https?://\S+")  
     urls = url_pattern.findall(message)
-
-    # check url end with media_extensions
     return any(url.lower().endswith(media_extensions) for url in urls)
 
 def detect_remote_url(message):
     """ detect remote_url """
     url_pattern = re.compile(r"https?://\S+")  
     urls = url_pattern.findall(message) 
-    
-    # filter end with media_extensions url
     media_urls = [url for url in urls if url.lower().endswith(media_extensions)]
-    
-    # if url end with media_extensions then insert the url, otherwise return 'FALSE'
     return media_urls[0] if media_urls else "FALSE"
 
 with open(input_file, "r", encoding="utf-8") as file:
@@ -78,13 +75,19 @@ for line in lines:
     if not line:
         continue
 
+    # check title_line
     chat_match = chat_id_pattern.match(line)
     if chat_match:
-        chat_number = chat_match.group(1)
-        current_doc_id = f"doc_{chat_number}"
+        chat_room_name = chat_match.group(1).strip()
+        chat_counter += 1
+        current_doc_id = f"doc_{chat_counter}"
+        # save chatname
+        chat_rooms[current_doc_id] = chat_room_name
+        # initialize participant[]
+        participants_by_chat[current_doc_id] = set()
         continue
 
-    # check date_line
+    # chech date_line
     is_date_line = False
     for date_pattern in date_patterns:
         date_match = date_pattern.match(line)
@@ -95,10 +98,10 @@ for line in lines:
             is_date_line = True
             break
     if is_date_line:
-        continue  # if date then skip
+        continue  
 
     message_added = False
-    skipped_line = False  # if no sender then skip
+    skipped_line = False  # if 'sender' is empty then skip
     for time_pattern in time_patterns:
         time_match = time_pattern.match(line)
         if time_match and current_date and current_doc_id:
@@ -121,10 +124,8 @@ for line in lines:
             unix_time = convert_to_unix(current_date, time_str)
             if unix_time is not None:
                 is_media = detect_media(message)
-                
-                # remote_url link
                 remote_url = detect_remote_url(message) 
-                local_url = "FALSE"  # LINE does not contain local url
+                local_url = "FALSE"  # LINE does not support local url
 
                 messages.append([
                     current_doc_id, unix_time, sender, message,
@@ -137,6 +138,9 @@ for line in lines:
                     local_url,  # local_url
                     remote_url  # remote_url
                 ])
+                # add sender into chatname
+                participants_by_chat[current_doc_id].add(sender)
+                
                 last_sender = sender
                 last_message_index = len(messages) - 1
                 message_added = True
@@ -147,18 +151,21 @@ for line in lines:
     if last_message_index is not None:
         messages[last_message_index][3] += " " + line
 
-# writing into csv file
+# write into chatlog CSV 
 with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
     writer = csv.writer(csvfile)
-    # col name
     writer.writerow([
         "doc_id", "unix_time", "sender", "message", "isReply", "who_replied_to",
-        "has_reactions", "reactions", "translated", "is_media", "is_OCR","local_url","remote_url"
+        "has_reactions", "reactions", "translated", "is_media", "is_OCR", "local_url", "remote_url"
     ])
     writer.writerows(messages)
 
-print(f"LINE to csv completed")
-
-
-
-
+# export chatname.csv
+chat_rooms_file = os.path.join(BASE_PATH, "backend", "core", "out", "info", f"{platform}__{chatname}.info.csv")
+with open(chat_rooms_file, "w", newline="", encoding="utf-8") as csvfile:
+    writer = csv.writer(csvfile)
+    # write display name, internal chatname and participants into csv file
+    writer.writerow(["display_name", "internal_chat_name", "participants"])
+    for doc_id, chat_room_name in chat_rooms.items():
+        participants = ",".join(sorted(list(participants_by_chat.get(doc_id, []))))
+        writer.writerow([doc_id, chat_room_name, participants])
