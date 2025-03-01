@@ -78,7 +78,7 @@ def flask_getNumChatsInGC(GC_name:str) -> int:
     """
     pass
 
-def flask_getChatDataFromDocIDGivenPIIName(doc_id:int, pii_name:str) -> dict:
+def flask_getChatDataFromDocIDGivenPIIName:
     """
     *Helper function for `GetChatsBetweenRangeForChatGivenPIIName`*
 
@@ -101,7 +101,17 @@ def flask_getChatDataFromDocIDGivenPIIName(doc_id:int, pii_name:str) -> dict:
         doc_id: (int) the document ID of the chat
         pii_name: (str) name of the positional inverted index. If the PII is called "`<pii_name>`.pii.txt", then `<pii_name>` is "pii".
     """
-    pass
+ 
+    """ Retrieve a specific chat message using its document ID from a given PII. """
+    data = request.get_json()
+    doc_id = data.get('doc_id')
+    pii_name = data.get('pii_name')
+
+    if doc_id is None or not pii_name:
+        return jsonify({"error": "Missing doc_id or pii_name"}), 400
+
+    chat_data = getChatDataFromDocIDGivenPIIName(doc_id, pii_name)
+    return jsonify(chat_data)
 
 @app.route('/GetChatsBetweenRangeForChatGivenPIIName', methods=['POST'])
 def flask_GetChatsBetweenRangeForGC():
