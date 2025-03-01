@@ -1,0 +1,41 @@
+import os
+import json
+
+BASE_PATH = "/GCSearch"
+
+def getChatDataFromDocIDGivenPIIName(doc_id: int, pii_name: str) -> dict:
+    """
+    Gets data for a single chat from a given doc_id.
+
+    Args:
+        doc_id (int): The document ID of the chat.
+        pii_name (str): Name of the positional inverted index.
+
+    Returns:
+        dict: Chat data in the format:
+        {
+            "doc_id": 0,
+            "time": 1234567890,
+            "sender": "Alice",
+            "message": "Hello, world!",
+            "reactions": ["Alice: ❤️", "Bob: 😂"],
+            "is_OCR": False,
+            "is_media": False,
+            "uri": "https://example.com/image.jpg"
+        }
+    """
+    pii_file = os.path.join(BASE_PATH, "backend", "core", "piis", f"{pii_name}.pii.txt")
+
+    if not os.path.exists(pii_file):
+        return {"error": "PII file not found"}
+
+    with open(pii_file, "r", encoding="utf-8") as file:
+        for line in file:
+            try:
+                chat = json.loads(line.strip())  # Assuming each line is a JSON object
+                if chat.get("doc_id") == doc_id:
+                    return chat
+            except json.JSONDecodeError:
+                continue  # Skip malformed lines
+
+    return {}  # Return empty dict if doc_id is not found
