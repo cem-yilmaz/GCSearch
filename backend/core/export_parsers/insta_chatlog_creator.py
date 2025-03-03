@@ -249,6 +249,12 @@ class InstaChatlogCreator:
             chat_name (str): The internal name of the chat
         """
         return len([name for name in os.listdir(os.path.join(self.raw_messages_dir, chat_name)) if name.startswith('message_')])
+    
+    def safe_format_message(self, message:str) -> str:
+        """
+        Formats a message to be safe for CSV output by removing newlines, carriage returns, tabs. We also escape quotes and commas.
+        """
+        return message.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ').replace('"', '\"').replace(',', ' ')
 
     def create_chatlog_file_for_chat(self, chat_name:str, handle_local_media:str="ignore") -> None:
         """
@@ -303,7 +309,8 @@ class InstaChatlogCreator:
                     sender = self.decode_special_characters(message['sender_name'])
                     time = message['timestamp_ms']
                     if 'content' in message:
-                        message_content = self.decode_special_characters(message['content']).replace('\n', ' ')
+                        message_content = self.decode_special_characters(message['content'])
+                        message_content = self.safe_format_message(message_content)
                     else:
                         message_content = '' # this likely means we have media
                     # check if the message is a system message
