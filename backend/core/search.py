@@ -216,7 +216,7 @@ class Searcher():
         message_regex = r"\((?P<chatName>.+)\) \[(?P<timestamp>.+)\] (?P<sender>.+): (?P<message>.+)(?:\n(?P<reactions>.+))?" # this may need to be improved to handle other characters
         match = re.match(message_regex, message)
         if not match:
-            input(f"Error parsing message: {message}")
+            print(f"Error parsing message: {message}")
         return {
             "doc_id": doc_id,
             "message": match.group("message"),

@@ -201,7 +201,7 @@ def flask_getNumChatsInGC(GC_name:str) -> int:
         
     
 
-def flask_getChatDataFromDocIDGivenPIIName:
+def flask_getChatDataFromDocIDGivenPIIName(doc_id, pii_name):
     """
     *Helper function for `GetChatsBetweenRangeForChatGivenPIIName`*
 
