@@ -1,74 +1,46 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 import Message from "./Message/Message";
 
 import "./GroupChatView.css";
 
-const messages = [
-    {
-        message: "Hello! Long time see old pal. It's been 700 years since we last talked.",
-        sender: "User1",
-        time: "12:10",
-        image_url: "",
-        isCurrentUser: true,
-        reactions: []
-    },
-    {
-        message: "Hi! How are things with the family?",
-        sender: "User2",
-        time: "12:11",
-        image_url: "",
-        isCurrentUser: false,
-        reactions: []
-    },
-    {
-        message: "How are you?",
-        sender: "User1",
-        time: "12:12",
-        image_url: "",
-        isCurrentUser: true,
-        reactions: []
-    },
-    {
-        message: "I'm good! I've been working on this project recently, and I think you'd be really interested.",
-        sender: "User2",
-        time: "12:13",
-        image_url: "",
-        isCurrentUser: false,
-        reactions: []
-    },
-    {
-        message: "What about you?",
-        sender: "User2",
-        time: "12:14",
-        image_url: "",
-        isCurrentUser: false,
-        reactions: []
-    },
-    {
-        message: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
-        sender: "User1",
-        time: "12:15",
-        image_url: "",
-        isCurrentUser: true,
-        reactions: []
-    }
-];
+const GroupChatView = ({ messages, isLoadingChatMessages }) => {
+    const messagesContainerRef = useRef(null);
 
-const GroupChatView = () => {
+    useEffect(() => {
+        if (messagesContainerRef.current && !isLoadingChatMessages) {
+            const container = messagesContainerRef.current;
+            const scrollHeight = container.scrollHeight;
+            const height = container.clientHeight;
+
+            const middlePosition = (scrollHeight / 2) - (height / 2);
+            container.scrollTo({
+                top: middlePosition,
+                behavior: "smooth"
+            });
+        }
+    }, [messages, isLoadingChatMessages]);
+    
     return (
         <div className="GroupChatView">
             <div className="GroupChatMessages">
-                {messages.map((message, index) => (
-                    <Message
-                        key={index}
-                        message={message.message}
-                        sender={message.sender}
-                        time={message.time}
-                        image_url={message.image_url}
-                        isCurrentUser={message.isCurrentUser}
-                    />
-                ))}
+                {isLoadingChatMessages ? (
+                    <p className="loading">Loading...</p>
+                ) : messages.length === 0 ? (
+                    <p className="no-messages">Click on a chat/result to view messages!</p>
+                ) : (
+                    console.log(`Got ${messages.length} messages: ${messages}`),
+                    messages.map((message, index) => (
+                        <Message
+                            key={index}
+                            message={message.message}
+                            sender={message.sender}
+                            timestamp={message.timestamp}
+                            image_url={message.image_url}
+                            isCurrentUser={message.isCurrentUser}
+                        />
+                    ))
+                )}
             </div>
         </div>
     )

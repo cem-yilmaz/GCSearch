@@ -183,11 +183,13 @@ class Searcher():
         date = self.convert_unix_timestamp_to_datetime(int(message[1]))
         sender = message[2]
         text = message[3]
+        if not text:
+            text = "[Media]"
         has_reactions = message[6]
         if has_reactions:
             reactions = message[7] + "\n"
         else:
-            reactions = ""
+            reactions = "[No reactions]\n"
         return f"({chatname}) [{date}] {sender}: {text}\n{reactions}"
     
     def flask_get_message_details_from_search_result(self, search_result:tuple[str, str, float], out_dir="out") -> dict:
@@ -201,12 +203,14 @@ class Searcher():
             (dict): Returns the following fields:
             ```
             {
+                "doc_id": the doc_id of the message,
                 "message": the message,
                 "sender": the sender of the message,
                 "timestamp": the unix timestamp of the message,
             }
             ```
         """
+        doc_id = search_result[1]
         # we cheat a bit by using the get_message_from_search_result function parsing the information that we need using regex
         message = self.get_message_from_search_result(search_result, out_dir)
         message_regex = r"\((?P<chatName>.+)\) \[(?P<timestamp>.+)\] (?P<sender>.+): (?P<message>.+)(?:\n(?P<reactions>.+))?" # this may need to be improved to handle other characters
@@ -214,6 +218,7 @@ class Searcher():
         if not match:
             input(f"Error parsing message: {message}")
         return {
+            "doc_id": doc_id,
             "message": match.group("message"),
             "sender": match.group("sender"),
             "timestamp": match.group("timestamp"),
@@ -254,9 +259,10 @@ class Searcher():
         platform = internal_chat_name.split("__")[0]
         if platform not in ["instagram", "whatsapp", "line", "wechat"]:
             print(f"DEBUG ERROR: Unknown platform {platform}")
-            platform = "whatsapp" # fallback
+            platform = "instagram" # fallback
         message_details = self.flask_get_message_details_from_search_result(search_result, out_dir)
         return {
+            "internal_chat_name": internal_chat_name,
             "chatName": chatName,
             "platform": platform,
             "message_details": message_details

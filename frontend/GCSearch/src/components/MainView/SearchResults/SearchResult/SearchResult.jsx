@@ -19,9 +19,11 @@ const getTitle = (sender, message) => {
 
 const SearchResult = (
     {
+        internal_chat_name,
         chatName,
         platform,
         message_details : {
+            doc_id,
             message,
             sender,
             timestamp

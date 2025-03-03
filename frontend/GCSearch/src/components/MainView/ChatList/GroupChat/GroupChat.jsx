@@ -20,6 +20,7 @@ const GroupChat = (
             internal_chat_name,
             ChatName,
             last_message : {
+                doc_id,
                 message,
                 sender,
                 timestamp

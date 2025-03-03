@@ -102,7 +102,7 @@ def flask_getLastMessageFromChat(chat_name:str) -> dict:
     Args:
         chat_name: (str) the internal chat name (e.g. "chat_1")
     Returns:
-        last_message: (dict) { "sender": str, "message": str, "timestamp": int }
+        last_message: (dict) { "doc_id": int, "sender": str, "message": str, "timestamp": int }
     """
     with open(f'core/out/chatlogs/{chat_name}.chatlog.csv', 'r') as f:
         reader = csv.reader(f)
@@ -111,7 +111,7 @@ def flask_getLastMessageFromChat(chat_name:str) -> dict:
             last_message = rows[1]
         else:
             return {"sender": "Error", "message": "No messages found", "timestamp": 0}
-        return {"sender": last_message[2], "message": last_message[3], "timestamp": int(last_message[1])}
+        return {"doc_id": last_message[0], "sender": last_message[2], "message": last_message[3], "timestamp": int(last_message[1])}
     
 @app.route('/api/GetInfoForGroupChat', methods=['POST'])
 def flask_getInfoForGroupChat():
@@ -245,9 +245,9 @@ def flask_GetChatsBetweenRangeForGC(include_media:bool=False):
         chats: (list[dict]) [chat_1, chat_2, ..., chat_(2n+1)]
     """
     data = request.get_json()
-    doc_id = data['doc_id']
+    doc_id = int(data['doc_id'])
     og_doc_id = doc_id
-    n = data['n']
+    n = int(data['n'])
     pii_name = data['pii_name']
     print(f"""
     doc_id: {doc_id}
@@ -257,14 +257,16 @@ def flask_GetChatsBetweenRangeForGC(include_media:bool=False):
     if 'include_media' in data:
         include_media = data['include_media']
     GC_name = flask_getDisplayNameFromChat(pii_name)
-    num_chats_in_GC = flask_getNumChatsInGC(pii_name) # you will have to do some processing to get the GC name from the PII name
+    num_chats_in_GC = flask_getNumChatsInGC(pii_name)
     chats = []
     # get the previous n chats
     chats_left_to_add = n
+    print(f"DEBUG: We are at doc_id {doc_id} in {pii_name}. We're going to add the next {n} chats before this.")
     while chats_left_to_add > 0:
         doc_id -= 1
-        if doc_id < 0:
+        if doc_id <= 0:
             break
+        print(f"We're now going to get the chat data from {pii_name} for chat {doc_id}")
         chat_data = flask_getChatDataFromDocIDGivenPIIName(doc_id, pii_name)
         #input(f"chat_data: {chat_data}")
         # we current dont check for media messages

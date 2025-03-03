@@ -13,6 +13,8 @@ const Main = () => {
     const [serverStatus, setServerStatus] = useState("Checking...");
     const [searchResults, setSearchResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [isLoadingChatMessages, setIsLoadingChatMessages] = useState(false);
+    const [currentChatMessages, setCurrentChatMessages] = useState([]);
     
     useEffect(() => {
         const checkServer = async () => {
@@ -29,6 +31,32 @@ const Main = () => {
     }, []);
 
     console.log(`Server status: ${serverStatus}`);
+
+    const fetchChatRange = async (pii_name, doc_id, n) => {
+        console.log(`Fetching chat range for ${pii_name} from ${doc_id} with n=${n}`);
+        setIsLoadingChatMessages(true);
+        try {
+            const body = {
+                pii_name: pii_name,
+                doc_id: doc_id,
+                n: n
+            };
+            const response = await fetch(`${API_URL}/GetChatsBetweenRangeForChatGivenPIIName`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+            const data = await response.json();
+            setIsLoadingChatMessages(false);
+            setCurrentChatMessages(data);
+        } catch (error) {
+            console.error(`Error fetching chat range: ${error}`);
+            setIsLoadingChatMessages(false);
+            setCurrentChatMessages([]);
+        }
+    };
 
     const handleSearch = async (searchQuery) => {
         if (!searchQuery.trim()) {
@@ -72,13 +100,30 @@ const Main = () => {
     
     return (
         <>
-            <ChatList />
+            <ChatList 
+                onSelectChat={
+                    (groupchat) => fetchChatRange(
+                        groupchat.internal_chat_name,
+                        groupchat.last_message.doc_id,
+                        10
+                    )
+                }
+            />
             <div className="central-container">
                 <h1>GCSearch</h1>
                 <SearchBar onSearch={handleSearch}/>
-                <MainChatWindow />
+                <MainChatWindow messages={currentChatMessages} isLoadingChatMessages={isLoadingChatMessages}/>
             </div>
-            <SearchResults results={searchResults} isLoading={isSearching}/>
+            <SearchResults 
+                results={searchResults}
+                isLoading={isSearching} 
+                onSelectSearchResult={
+                    (res) => fetchChatRange(
+                        res.internal_chat_name,
+                        res.message_details.doc_id,
+                        10
+                    )
+                }/>
         </>
     );
 };

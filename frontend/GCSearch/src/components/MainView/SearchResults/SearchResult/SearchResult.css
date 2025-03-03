@@ -62,9 +62,13 @@
     margin-bottom: 0;
 }
 
+.message-bottom .sender {
+    width: 30%;
+}
+
 .message-bottom .message {
     margin: 0;
-    width: auto;
+    width: 50%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

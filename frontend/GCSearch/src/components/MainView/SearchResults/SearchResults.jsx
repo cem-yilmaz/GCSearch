@@ -4,7 +4,7 @@ import SearchResult from "./SearchResult/SearchResult";
 
 import "./SearchResults.css";
 
-const SearchResults = ({ results = [], isLoading = false }) => {
+const SearchResults = ({ results = [], isLoading = false, onSelectSearchResult }) => {
     return (
         <div className="SearchResults">
             <h2>Search Results</h2>
@@ -15,7 +15,9 @@ const SearchResults = ({ results = [], isLoading = false }) => {
             ) : results.length > 0 ? (
                 console.log(`Got ${results.length} results: ${results}`),
                 results.map((result, index) => (
-                    <SearchResult key={index} {...result} />
+                    <div key={index} onClick={() => onSelectSearchResult(result)}>
+                        <SearchResult {...result} />
+                    </div>
                 ))
             ) : (
                 <p className="no-results">No results found</p>

@@ -7,7 +7,7 @@ import "./ChatList.css";
 
 const API_URL = "http://localhost:5000/api";
 
-const ChatList = () => {
+const ChatList = ({ onSelectChat }) => {
     const [groupChats, setGroupChats] = useState([]);
     const [selectedPlatform, setSelectedPlatform] = useState("instagram");
     const [isLoading, setIsLoading] = useState(true);
@@ -106,10 +106,11 @@ const ChatList = () => {
                     <p>Loading chats...</p>
                 ) : (
                     groupChats.map((groupchat, index) => (
-                        <GroupChat
-                            key={index}
-                            groupchat={groupchat}
-                        />
+                        <div key={index} onClick={() => onSelectChat(groupchat)}>
+                            <GroupChat
+                                groupchat={groupchat}
+                            />
+                        </div>
                     ))
                 )}
             </div>
