@@ -5,12 +5,12 @@ from datetime import datetime
 
 # input file and output file
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
-input_file = os.path.join(BASE_PATH, "backend", "core", "export", "line", "LINE__chat.txt")  # input file path
+input_file = os.path.join(BASE_PATH, "export", "line", "LINE__chat.txt")  # input file path
 platform="LINE"
-chatname="chat"
-output_file = os.path.join(BASE_PATH, "backend", "core", "out", "chatlogs", f"{platform}__{chatname}.chatlog.csv")  # output file path
+chatname="Chat 1"
+output_file = os.path.join(BASE_PATH,  "out", "chatlogs", f"{platform}__{chatname}.chatlog.csv")  # output file path
 
-chat_rooms_file = os.path.join(BASE_PATH, "backend", "core", "out", "info", f"{platform}__{chatname}.info.csv")
+chat_rooms_file = os.path.join(BASE_PATH,  "out", "info", f"{platform}__{chatname}.info.csv")
 
 input(f"We will be reading from {input_file} and writing to {output_file} and {chat_rooms_file}. Press Enter to continue.")
 
@@ -33,17 +33,6 @@ time_patterns = [
 # media keywords
 media_keywords = ["[photo]", "[video]", "[照片]", "[影片]", "[檔案]", "[file]", "[sticker]", "[貼圖]"]
 media_extensions = (".jpg", ".jpeg", ".png", ".gif", ".mp4", ".mov", ".avi", ".mkv", ".mp3", ".wav", ".flac", ".pdf")
-
-# save the messages
-messages = []
-current_doc_id = None
-current_date = None
-last_sender = None
-last_message_index = None  
-
-# keep doc_id
-chat_counter = 0
-chat_rooms = {}  # format： { "doc_1": "chatname", ... }
 
 # create sender dic{}
 participants_by_chat = {}
@@ -72,6 +61,16 @@ def detect_remote_url(message):
     return media_urls[0] if media_urls else "FALSE"
 
 def generate_chatlog():
+    # save the messages
+    messages = []
+    current_doc_id = None
+    current_date = None
+    last_sender = None
+    last_message_index = None  
+
+    # keep doc_id
+    chat_counter = 0
+    chat_rooms = {} 
     with open(input_file, "r", encoding="utf-8") as file:
         lines = file.readlines()
 
