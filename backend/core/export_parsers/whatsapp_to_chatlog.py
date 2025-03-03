@@ -164,5 +164,5 @@ def process_all_whatsapp_exports():
         creator = WhatsappChatlogCreator(full_path)
         creator.create_csv_files()
 
-if __name__ == "__main__":
+def generate_chatlog():
     process_all_whatsapp_exports()

@@ -56,4 +56,5 @@ output_csv_path = os.path.join(OUTPUT_DIR, output_csv_name)
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-transform_csv_to_csv(input_csv_path, output_csv_path)
+def generate_chatlog():
+    transform_csv_to_csv(input_csv_path, output_csv_path)

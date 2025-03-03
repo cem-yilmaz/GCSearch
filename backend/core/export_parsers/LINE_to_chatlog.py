@@ -71,7 +71,7 @@ def detect_remote_url(message):
     media_urls = [url for url in urls if url.lower().endswith(media_extensions)]
     return media_urls[0] if media_urls else "FALSE"
 
-def convert_line_export():
+def generate_chatlog():
     with open(input_file, "r", encoding="utf-8") as file:
         lines = file.readlines()
 
