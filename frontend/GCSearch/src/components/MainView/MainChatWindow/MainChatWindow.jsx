@@ -4,10 +4,10 @@ import GroupChatView from "./GroupChatView/GroupChatView";
 
 import "./MainChatWindow.css";
 
-const MainChatWindow = () => {
+const MainChatWindow = ({ messages, isLoadingChatMessages }) => {
     return (
         <div className="MainChatWindow">
-            <GroupChatView />
+            <GroupChatView messages={messages} isLoadingChatMessages={isLoadingChatMessages}/>
         </div>
     )
 };

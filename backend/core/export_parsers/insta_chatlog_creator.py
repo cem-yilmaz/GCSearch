@@ -307,7 +307,7 @@ class InstaChatlogCreator:
                     else:
                         message_content = '' # this likely means we have media
                     # check if the message is a system message
-                    if self.chat_is_system_message(message_content.strip()):
+                    if self.chat_is_system_message(message_content.strip()) and i > 0: # if we only have one message and it's a system message, it'll create a malformed chatlog that causes errors later
                         docNo -= 1 # correct the docNo
                         continue # skip writing this message
                     isReply = False

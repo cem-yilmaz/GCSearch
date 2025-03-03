@@ -2,15 +2,27 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: top;
     height: 95%;
     width: 25%;
     border-radius: 1rem;
-    overflow-y: auto;
     padding: 0;
     margin: 0;
+    margin-right: 10px;
     list-style-type: none;
     background-color: white;
     border: grey solid 0.1rem;
     color: black;
+}
+
+.SearchResults .actual-results {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: scroll;
+}
+
+.SearchResults h2 {
+    border-bottom: 0.1rem solid grey;
+    width: 100%;
+    text-align: center;
 }

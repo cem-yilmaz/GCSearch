@@ -1,9 +1,15 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
-from core import *
+from flask_cors import CORS, cross_origin
+from core.search import Searcher
+
+import os
+import csv
+import datetime
 
 app = Flask(__name__)
 CORS(app)
+
+searcher = Searcher()
 
 currently_supported_platforms = [
     "instagram",
@@ -18,14 +24,125 @@ currently_supported_languages = [
     "zh-tw", # Traditional Chinese
 ]
 
-# Searching
-@app.route('/GetTopNResultsFromSearch', methods=['POST'])
-def flask_GetTopNResultsFromSearch():
+@app.route('/api/isAlive', methods=['GET'])
+def flask_isAlive():
     """
-    Gets the top N results from a search query for a given positional inverted index.
+    Simple function to check if the server is alive.
+    """
+    return jsonify({"status": "alive"})
+
+def flask_getAllParsedChats() -> list[str]:
+    """
+    Gets the internal chat names from all the parsed chats, located within the `core/out/*` directories.
+
+    Returns:
+        parsed_chats: (list[str]) list of internal chat names (e.g. ["chat_1", "chat_2", ...])
+    """
+    parsed_chats = []
+    for filename in os.listdir('core/out/info/'):
+        if filename.endswith('.csv'):
+            parsed_chats.append(filename.split('.')[0])
+    return parsed_chats
+
+def flask_sortChatsByPlatform() -> dict[str, list[str]]:
+    """
+    Sorts the internal chat names by platform. Returns a dictionary in the format:
+    ```
+    {
+        "instagram": ["chat_1", "chat_2", ...],
+        "whatsapp": ["chat_3", "chat_4", ...],
+        ...
+    }
+    ```
+    """
+    sorted_chats = {}
+    for groupchat in flask_getAllParsedChats():
+        platform = groupchat.split('_')[0]
+        if platform not in sorted_chats:
+            sorted_chats[platform] = []
+        sorted_chats[platform].append(groupchat)
+    return sorted_chats
+
+@app.route('/api/GetAllParsedChatsForPlatform', methods=['POST'])
+def flask_getAllParsedChatsForPlatform():
+    """
+    Gets all the parsed chats for a given platform.
 
     Args:
-        pii_name: (str) name of the positional inverted index. If the PII is called "`<pii_name>`.pii.txt", then `<pii_name>` is "pii".
+        platform: (str) the name of the platform (e.g. "instagram", "whatsapp", "wechat", "line")
+    Returns:
+        parsed_chats: (list[str]) list of internal chat names (e.g. ["chat_1", "chat_2", ...])
+    """
+    data = request.get_json()
+    platform = data['platform']
+    sorted_chats = flask_sortChatsByPlatform()
+    if platform not in sorted_chats:
+        return jsonify({"error": f"Platform \"{platform}\" not supported. Currently supported platforms are: {currently_supported_platforms}"})
+    return jsonify(sorted_chats[platform])
+
+# Rendering individual groupchats from ChatList
+def flask_getDisplayNameFromChat(chat_name:str) -> str:
+    """
+    Given an internal `chat_name`, gets the display name of the chat.
+
+    Args:
+        chat_name: (str) the internal chat name (e.g. "chat_1")
+    Returns:
+        display_name: (str) the display name of the chat
+    """
+    with open(f'core/out/info/{chat_name}.info.csv', 'r') as f:
+        reader = csv.reader(f)
+        display_name = [row for row in reader][1][1]
+        return display_name
+
+def flask_getLastMessageFromChat(chat_name:str) -> dict:
+    """
+    Given an internal `chat_name`, finds the latest message sent to that chat and returns the sender, message, and timestamp.
+
+    Args:
+        chat_name: (str) the internal chat name (e.g. "chat_1")
+    Returns:
+        last_message: (dict) { "doc_id": int, "sender": str, "message": str, "timestamp": int }
+    """
+    with open(f'core/out/chatlogs/{chat_name}.chatlog.csv', 'r') as f:
+        reader = csv.reader(f)
+        rows = [row for row in reader]
+        if len(rows) > 1:
+            last_message = rows[1]
+        else:
+            return {"sender": "Error", "message": "No messages found", "timestamp": 0}
+        return {"doc_id": last_message[0], "sender": last_message[2], "message": last_message[3], "timestamp": int(last_message[1])}
+    
+@app.route('/api/GetInfoForGroupChat', methods=['POST'])
+def flask_getInfoForGroupChat():
+    """
+    Gets the display name and last message for a given chat.
+
+    Args:
+        chat_name: (str) the internal chat name (e.g. "chat_1")
+    Returns:
+        chat_info: (dict) { "display_name": str, "last_message": { "sender": str, "message": str, "timestamp": int } }
+    """
+    try:
+        data = request.get_json()
+        chat_name = data['chat_name']
+        display_name = flask_getDisplayNameFromChat(chat_name)
+        last_message = flask_getLastMessageFromChat(chat_name)
+        return jsonify({"display_name": display_name, "last_message": last_message})
+    except FileNotFoundError as e:
+        print(f"DEBUG: FILENOTFOUND ERROR with chat {chat_name} {str(e)}")
+        return jsonify({"error": f"Could not find file for chat {chat_name}"}), 404
+    except Exception as e:
+        print(f"DEBUG: OTHER ERROR with chat {chat_name} {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+# Searching
+@app.route('/api/GetTopNResultsFromSearch', methods=['POST'])
+def flask_GetTopNResultsFromSearch():
+    """
+    Gets the top N results from a search query for all PIIs.
+
+    Args:
         query: (str) search query
         n: (int) number of results to return. If n > number of docs m, return m results.
 
@@ -33,13 +150,13 @@ def flask_GetTopNResultsFromSearch():
         top_n_results: (dict) { doc_id (int): score (int):, ... }
     """
     data = request.get_json()
-    pii_name = data['pii_name'] 
     query = data['query'] 
     n = data['n'] 
-    #top_n_results = core.GetTopNResultsFromSearch(pii_name, query, n)
-    #return jsonify(top_n_results)
+    top_n_results = searcher.flask_search(query, n)
+    print(f"DEBUG: got {len(top_n_results)} results for query \"{query}\"")
+    return jsonify(top_n_results)
 
-@app.route('/GetMetaChatDataFromPIIName', methods=['POST'])
+@app.route('/api/GetMetaChatDataFromPIIName', methods=['POST'])
 def flask_GetMetaChatDataFromPIIName():
     """
     Gets the metadata (Internal Chat Name, Display name, Participants) from a given positional inverted index. Returns a dictionary e.g.
@@ -76,7 +193,13 @@ def flask_getNumChatsInGC(GC_name:str) -> int:
     Returns:
         num_chats: (int) number of chats in the GC
     """
-    pass
+    with open(f'core/out/chatlogs/{GC_name}.chatlog.csv', 'r') as f:
+        reader = csv.reader(f)
+        num_chats = len([row for row in reader]) - 1
+        f.close()
+    return num_chats
+        
+    
 
 def flask_getChatDataFromDocIDGivenPIIName:
     """
@@ -101,20 +224,12 @@ def flask_getChatDataFromDocIDGivenPIIName:
         doc_id: (int) the document ID of the chat
         pii_name: (str) name of the positional inverted index. If the PII is called "`<pii_name>`.pii.txt", then `<pii_name>` is "pii".
     """
- 
-    """ Retrieve a specific chat message using its document ID from a given PII. """
-    data = request.get_json()
-    doc_id = data.get('doc_id')
-    pii_name = data.get('pii_name')
+    # we already have this functionality in search.py
+    wrapper = (pii_name, doc_id, None)
+    return searcher.flask_get_message_details_from_search_result(wrapper)
 
-    if doc_id is None or not pii_name:
-        return jsonify({"error": "Missing doc_id or pii_name"}), 400
-
-    chat_data = getChatDataFromDocIDGivenPIIName(doc_id, pii_name)
-    return jsonify(chat_data)
-
-@app.route('/GetChatsBetweenRangeForChatGivenPIIName', methods=['POST'])
-def flask_GetChatsBetweenRangeForGC():
+@app.route('/api/GetChatsBetweenRangeForChatGivenPIIName', methods=['POST'])
+def flask_GetChatsBetweenRangeForGC(include_media:bool=False):
     """
     Gets 2n+1 chats around a given chat in a GC given a PII name. Calls `getChatDataFromDocIDGivenPIIName` for each chat, so returns a list of dictionaries (in the format described in that function).
 
@@ -130,44 +245,62 @@ def flask_GetChatsBetweenRangeForGC():
         chats: (list[dict]) [chat_1, chat_2, ..., chat_(2n+1)]
     """
     data = request.get_json()
-    doc_id = data['doc_id']
-    n = data['n']
+    doc_id = int(data['doc_id'])
+    og_doc_id = doc_id
+    n = int(data['n'])
     pii_name = data['pii_name']
-    include_media = data['include_media']
-    GC_name = None #TODO: get the GC name from the PII name
-    num_chats_in_GC = flask_getNumChatsInGC(GC_name) # you will have to do some processing to get the GC name from the PII name
+    print(f"""
+    doc_id: {doc_id}
+    n: {n}
+    pii_name: {pii_name}
+    """)
+    if 'include_media' in data:
+        include_media = data['include_media']
+    GC_name = flask_getDisplayNameFromChat(pii_name)
+    num_chats_in_GC = flask_getNumChatsInGC(pii_name)
     chats = []
     # get the previous n chats
     chats_left_to_add = n
+    print(f"DEBUG: We are at doc_id {doc_id} in {pii_name}. We're going to add the next {n} chats before this.")
     while chats_left_to_add > 0:
         doc_id -= 1
-        if doc_id < 0:
+        if doc_id <= 0:
             break
+        print(f"We're now going to get the chat data from {pii_name} for chat {doc_id}")
         chat_data = flask_getChatDataFromDocIDGivenPIIName(doc_id, pii_name)
-        if chat_data['is_media'] and not include_media:
-            continue
+        #input(f"chat_data: {chat_data}")
+        # we current dont check for media messages
+        #if chat_data[9] and not include_media:
+        #    continue
         chats.append(chat_data)
+        print(f"added chat +1")
         chats_left_to_add -= 1
+    print("Added the previous n chats")
     # get the current chat
     chats_left_to_add = n+1 # reset to get n+1 more chats
     # now lets check the current chat
+    doc_id = og_doc_id
     chat_data = flask_getChatDataFromDocIDGivenPIIName(doc_id, pii_name)
-    if not chat_data['is_media'] or include_media:
-        chats.append(chat_data)
-        chats_left_to_add -= 1 # decrement to indicate we've added the current chat, otherwise we're getting n+1 ones ahead to make up for it
+    
+    chats.append(chat_data)
+    chats_left_to_add -= 1 # decrement to indicate we've added the current chat, otherwise we're getting n+1 ones ahead to make up for it
+    
+    # now we get the next n chats
+    chats_left_to_add = n
     while chats_left_to_add > 0:
         doc_id += 1
         if doc_id > num_chats_in_GC:
             break
         chat_data = flask_getChatDataFromDocIDGivenPIIName(doc_id, pii_name)
-        if chat_data['is_media'] and not include_media:
-            continue
+        #if chat_data['is_media'] and not include_media:
+        #    continue
         chats.append(chat_data)
+        print(f"added chat +1")
         chats_left_to_add -= 1
 
     return jsonify(chats)
 
-@app.route('/CreateChatlogFromExport', methods=['POST'])
+@app.route('/api/CreateChatlogFromExport', methods=['POST'])
 def flask_CreateChatlogFromExports():
     """
     Calls the internal export -> chatlog function for a given social media platform. Will create the directories `core/out/info/` and `core/out/chatlogs/` (if they do not exist) and populate them with the export data. This data is located in the `export/<platform_name>/` directory.

@@ -1,0 +1,75 @@
+.search-result {
+    display: flex;
+    flex-direction: row;
+    border-bottom: 0.1rem solid grey;
+    align-items: center;
+    height: auto;
+    width: 100%;
+    background-color: white;
+    cursor: pointer;
+}
+
+.search-result:hover {
+    background-color: #f0f0f0;
+}
+
+.search-result .platform-image img {
+    width: 30px;
+    height: 30px;
+    margin-right: 0.1rem;
+    margin-left: 1rem;
+}
+
+.message-details {
+    flex: 1;
+    flex-direction: column;
+    justify-content: space-between;
+    width: auto;
+    min-height: 40px;
+    padding: 0.5rem;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.message-top, .message-bottom {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0;
+    text-overflow: ellipsis;
+}
+
+.message-top h3 {
+    margin: 0;
+    width: 50%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.message-top .date {
+    margin: 0;
+    width: 50%;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.message-top {
+    height: 10px;
+    margin-bottom: 0;
+}
+
+.message-bottom .sender {
+    width: 30%;
+}
+
+.message-bottom .message {
+    margin: 0;
+    width: 50%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

@@ -1,7 +1,8 @@
-from tokenisers.ttds_tokeniser import Tokeniser
+from .tokenisers.ttds_tokeniser import Tokeniser
 import pickle
 import os
 import math
+import re
 from datetime import datetime
 
 class Searcher():
@@ -22,7 +23,8 @@ class Searcher():
             pii_name (str): The name of the PII to load. If you wish to open `<chatname>.pii.pkl`, pass in `<chatname>`.
             pii_dir (str): The directory in which the PII is stored. Default is `piis`.
         """
-        pii_path = f"{pii_dir}/{pii_name}.pii.pkl"
+        relative_pii_dir = os.path.join(os.path.dirname(__file__), pii_dir)
+        pii_path = f"{relative_pii_dir}/{pii_name}.pii.pkl"
         with open(pii_path, "rb") as f:
             pii = pickle.load(f)
             f.close()
@@ -47,8 +49,8 @@ class Searcher():
         
         avgdl = sum(doc_lengths.values()) / N if N > 0 else 0
 
-        k1 = 1.5
-        b = 0.75
+        k1 = 0.75 # default - 1.2
+        b = 0.75 # default - 0.75
         scores = {}
 
         for token in tokens:
@@ -96,8 +98,11 @@ class Searcher():
         Returns:
             (list[tuple[str, str, float]]) A list of the top N results for all PIIs in the format `(pii_name, docNo, score)`.
         """
+        # make sure we're preserving the path to piis to be relative to where search.py is
+        pii_dir = os.path.join(os.path.dirname(__file__), input_dir)
+        print(f"DEBUG: Searching in {pii_dir}")
         results = []
-        for pii_file in os.listdir(input_dir):
+        for pii_file in os.listdir(pii_dir):
             if pii_file.endswith(".pii.pkl"):
                 pii_name = pii_file.split(".")[0]
                 pii = self.load_pii(pii_name)
@@ -117,6 +122,37 @@ class Searcher():
         """
         return datetime.fromtimestamp(timestamp / 1000.0).strftime('%Y-%m-%d %H:%M:%S')
     
+    def get_display_name_from_chatname(self, chatname:str, out_dir="out") -> str:
+        """
+        Given an internal chatname, returns the display name of the chat.
+
+        Args:
+            chatname (str): The internal chatname to get the display name for.
+            out_dir (str): The directory in which the info files are stored. Default is `out`.
+        """
+        relative_out_dir = os.path.join(os.path.dirname(__file__), out_dir)
+        info_path = f"{relative_out_dir}/info/{chatname}.info.csv"
+        with open(info_path, "r") as f:
+            display_name = f.readlines()[1].split(",")[1]
+            f.close()
+        return display_name
+    
+    def get_row_from_docno(self, docno:int, chatlog_path:str) -> str:
+        """
+        Given a docno, returns the row in the chatlog that corresponds to that docno.
+
+        Args:
+            docno (int): The docno to search for.
+            chatlog_path (str): The path to the chatlog to search in.
+        """
+        with open(chatlog_path, "r") as f:
+            chatlog = f.readlines()
+            f.close()
+        for row in chatlog:
+            if row.split(",")[0] == str(docno):
+                return row
+        return None
+    
     def get_message_from_search_result(self, search_result:tuple[str, str, float], out_dir="out") -> str:
         """
         Given a search result, returns the message.
@@ -132,28 +168,61 @@ class Searcher():
             out_dir (str): The directory in which the chatlogs are stored. Default is `out`.
         """
         internal_chatname, docNo, _ = search_result
+        relative_out_dir = os.path.join(os.path.dirname(__file__), out_dir)
         # First we need the proper chatname. This can be found at out_dir/info/<internal_chatname>.info.csv, under the "Display name" column
-        info_path = f"{out_dir}/info/{internal_chatname}.info.csv"
+        info_path = f"{relative_out_dir}/info/{internal_chatname}.info.csv"
         with open(info_path, "r") as f:
             chatname = f.readlines()[1].split(",")[1]
             f.close()
         # Now we can get the remaining information by reading the chatlog, at out_dir/chatlogs/<internal_chatname>.chatlog.csv
-        chatlog_path = f"{out_dir}/chatlogs/{internal_chatname}.chatlog.csv"
+        chatlog_path = f"{relative_out_dir}/chatlogs/{internal_chatname}.chatlog.csv"
         with open(chatlog_path, "r") as f:
             chatlog = f.readlines()
             f.close()
-        # Now we can get the message
-        message = [msg for msg in chatlog if msg.split(",")[0] == docNo][0].split(",")
-        #print(f"DEBUG: {message}")
+        message = self.get_row_from_docno(docNo, chatlog_path).split(",") # we should only really get one message here, so as a hack we just get the first
         date = self.convert_unix_timestamp_to_datetime(int(message[1]))
         sender = message[2]
         text = message[3]
+        if not text:
+            text = "[Media]"
         has_reactions = message[6]
         if has_reactions:
             reactions = message[7] + "\n"
         else:
-            reactions = ""
+            reactions = "[No reactions]\n"
         return f"({chatname}) [{date}] {sender}: {text}\n{reactions}"
+    
+    def flask_get_message_details_from_search_result(self, search_result:tuple[str, str, float], out_dir="out") -> dict:
+        """
+        Given a search result, returns the message in a dictionary. 
+
+        Args:
+            search_result (tuple[str, str, float]): The search result to get the message for (in the format `(chatname, docNo, score)`).
+            out_dir (str): The directory in which the chatlogs are stored. Default is `out`.
+        Returns:
+            (dict): Returns the following fields:
+            ```
+            {
+                "doc_id": the doc_id of the message,
+                "message": the message,
+                "sender": the sender of the message,
+                "timestamp": the unix timestamp of the message,
+            }
+            ```
+        """
+        doc_id = search_result[1]
+        # we cheat a bit by using the get_message_from_search_result function parsing the information that we need using regex
+        message = self.get_message_from_search_result(search_result, out_dir)
+        message_regex = r"\((?P<chatName>.+)\) \[(?P<timestamp>.+)\] (?P<sender>.+): (?P<message>.+)(?:\n(?P<reactions>.+))?" # this may need to be improved to handle other characters
+        match = re.match(message_regex, message)
+        if not match:
+            input(f"Error parsing message: {message}")
+        return {
+            "doc_id": doc_id,
+            "message": match.group("message"),
+            "sender": match.group("sender"),
+            "timestamp": match.group("timestamp"),
+        }
 
     def search(self, query:str) -> None:
         """
@@ -163,6 +232,58 @@ class Searcher():
         for result in results:
             message = self.get_message_from_search_result(result)
             print(message)
+
+    def flask_get_message_data(self, search_result:tuple[str, str, float], out_dir="out") -> dict:
+        """
+        Given a search result (`chatname`, `docNo`, `score`), returns the message data in a dictionary. 
+
+        Args:
+            search_result (tuple[str, str, float]): The search result to get the message for (in the format `(chatname, docNo, score)`).
+            out_dir (str): The directory in which the chatlogs are stored. Default is `out`.
+        Returns:
+            (dict): Returns the following fields:
+            ```
+            {
+                "chatName": internal_chatname,
+                "platform": the platform of the chat,
+                "message_details" : {
+                    "message": the message,
+                    "sender": the sender of the message,
+                    "timestamp": the unix timestamp of the message,
+                }
+            }
+            ```
+        """
+        internal_chat_name = search_result[0]
+        chatName = self.get_display_name_from_chatname(internal_chat_name)
+        platform = internal_chat_name.split("__")[0]
+        if platform not in ["instagram", "whatsapp", "line", "wechat"]:
+            print(f"DEBUG ERROR: Unknown platform {platform}")
+            platform = "instagram" # fallback
+        message_details = self.flask_get_message_details_from_search_result(search_result, out_dir)
+        return {
+            "internal_chat_name": internal_chat_name,
+            "chatName": chatName,
+            "platform": platform,
+            "message_details": message_details
+        }
+        
+
+    # now for the functions that will be used in the api
+    def flask_search(self, query:str, n:int=50) -> list[str]:
+        """
+        Searches for the query in all PIIs in the `piis` directory.
+
+        Args:
+            query (str): The query to search for.
+            n (int): The number of results to return. Default is 50.
+
+        Returns:
+            (list[str]) A list of the top `n` messages that match the query.
+        """
+        results = self.search_all_piis_in_folder(query, top_n=n)
+        messages = [self.flask_get_message_data(result) for result in results]
+        return messages[:n]
 
 
 s = Searcher() # delete this line
