@@ -63,6 +63,38 @@ def flask_sortChatsByPlatform() -> dict[str, list[str]]:
         sorted_chats[platform].append(groupchat)
     return sorted_chats
 
+def flask_getCurrentUser(platform:str="instagram") -> str | None:
+    """
+    Gets the current user by parsing the chats. It finds the sender present in each of the participants, which by the nature of \"someone's exported their data\". must be the current user
+    
+    Args:
+        platform: (str) the name of the platform (e.g. "instagram", "whatsapp", "wechat", "line")
+    Returns:
+        current_user: (str) The current user's name. If there are multiple users present in all chats, we cannot determine the current user and return None. Additionally, if the code fails for another reason, we return None.
+    """
+    users_present_in_all_chats_so_far = set()
+    script_dir = os.path.dirname(__file__)
+    # info is in ./core/out/info
+    info_dir = os.path.join(script_dir, 'core/out/info')
+    for chat in os.listdir(info_dir):
+        if chat.endswith('.csv'):
+            with open(os.path.join(info_dir, chat), 'r') as f:
+                reader = csv.reader(f)
+                rows = [row for row in reader]
+                f.close()
+            participants_str = rows[1][2]
+            participants = [p.strip() for p in participants_str.strip('[]').split(',')]
+            if len(users_present_in_all_chats_so_far) == 0:
+                users_present_in_all_chats_so_far = set(participants)
+            else:
+                users_present_in_all_chats_so_far = users_present_in_all_chats_so_far.intersection(participants)
+
+
+    if len(users_present_in_all_chats_so_far) == 1:
+        return list(users_present_in_all_chats_so_far)[0]
+    else:
+        return None
+
 @app.route('/api/GetAllParsedChatsForPlatform', methods=['POST'])
 def flask_getAllParsedChatsForPlatform():
     """
@@ -321,5 +353,6 @@ def flask_CreateChatlogFromExports():
     #core.CreateChatlogFromExport(platform, include_media, language)
     return jsonify({"success": "Export processed"})
 
-if __name__ == '__main__':
-    app.run(debug=True)
+#if __name__ == '__main__':
+#    app.run(debug=True)
+print(flask_getCurrentUser())
