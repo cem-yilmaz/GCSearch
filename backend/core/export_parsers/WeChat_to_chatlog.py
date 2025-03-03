@@ -1,5 +1,5 @@
 import pandas as pd
-import json
+import os
 import chardet
 
 def detect_encoding(file_path):
@@ -42,7 +42,18 @@ def transform_csv_to_csv(input_csv, output_csv):
     
     print(f"转换完成，已保存到 {output_csv}")
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(SCRIPT_DIR)
+WECHAT_EXPORT_DIR = os.path.join(BASE_DIR, "core", "export", "wechat")
+OUTPUT_DIR = os.path.join(BASE_DIR, "core", "export", "out")
+
 # 使用示例
-input_csv_path = "F:/backup/messages.csv" # 你的输入 CSV 文件路径
-output_csv_path = "F:/chatlog.csv"  # 你的输出 CSV 文件路径
+input_csv_name = "messages.csv" # 你的输入 CSV 文件路径
+input_csv_path = os.path.join(WECHAT_EXPORT_DIR, input_csv_name)
+output_csv_name = "chatlog.csv"  # 你的输出 CSV 文件路径
+output_csv_path = os.path.join(OUTPUT_DIR, output_csv_name)
+
+
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
 transform_csv_to_csv(input_csv_path, output_csv_path)
