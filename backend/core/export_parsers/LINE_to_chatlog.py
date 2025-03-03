@@ -4,11 +4,15 @@ import os
 from datetime import datetime
 
 # input file and output file
-BASE_PATH = "/GCSearch/" 
-input_file = "Line_chat.txt"  # input file
+BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
+input_file = os.path.join(BASE_PATH, "backend", "core", "export", "line", "LINE__chat.txt")  # input file path
 platform="LINE"
 chatname="chat"
 output_file = os.path.join(BASE_PATH, "backend", "core", "out", "chatlogs", f"{platform}__{chatname}.chatlog.csv")  # output file path
+
+chat_rooms_file = os.path.join(BASE_PATH, "backend", "core", "out", "info", f"{platform}__{chatname}.info.csv")
+
+input(f"We will be reading from {input_file} and writing to {output_file} and {chat_rooms_file}. Press Enter to continue.")
 
 # line chatroom pattern：capture [LINE] chatname pattern
 chat_id_pattern = re.compile(r"\[LINE\]\s+(.*)")
@@ -67,105 +71,106 @@ def detect_remote_url(message):
     media_urls = [url for url in urls if url.lower().endswith(media_extensions)]
     return media_urls[0] if media_urls else "FALSE"
 
-with open(input_file, "r", encoding="utf-8") as file:
-    lines = file.readlines()
+def convert_line_export():
+    with open(input_file, "r", encoding="utf-8") as file:
+        lines = file.readlines()
 
-for line in lines:
-    line = line.strip()
-    if not line:
-        continue
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
 
-    # check title_line
-    chat_match = chat_id_pattern.match(line)
-    if chat_match:
-        chat_room_name = chat_match.group(1).strip()
-        chat_counter += 1
-        current_doc_id = f"doc_{chat_counter}"
-        # save chatname
-        chat_rooms[current_doc_id] = chat_room_name
-        # initialize participant[]
-        participants_by_chat[current_doc_id] = set()
-        continue
+        # check title_line
+        chat_match = chat_id_pattern.match(line)
+        if chat_match:
+            chat_room_name = chat_match.group(1).strip()
+            chat_counter += 1
+            current_doc_id = f"doc_{chat_counter}"
+            # save chatname
+            chat_rooms[current_doc_id] = chat_room_name
+            # initialize participant[]
+            participants_by_chat[current_doc_id] = set()
+            continue
 
-    # chech date_line
-    is_date_line = False
-    for date_pattern in date_patterns:
-        date_match = date_pattern.match(line)
-        if date_match:
-            groups = date_match.groups()
-            if groups:
-                current_date = groups[-1] if len(groups) >= 2 else groups[0]
-            is_date_line = True
-            break
-    if is_date_line:
-        continue  
-
-    message_added = False
-    skipped_line = False  # if 'sender' is empty then skip
-    for time_pattern in time_patterns:
-        time_match = time_pattern.match(line)
-        if time_match and current_date and current_doc_id:
-            groups = time_match.groups()
-            if len(groups) == 3:
-                time_str, sender, message = groups
-            else:
-                period, hour, minute, sender, message = groups
-                hour = int(hour)
-                if period == "下午" and hour != 12:
-                    hour += 12
-                elif period == "上午" and hour == 12:
-                    hour = 0
-                time_str = f"{hour:02}:{minute}"
-            
-            if not sender.strip():
-                skipped_line = True
+        # chech date_line
+        is_date_line = False
+        for date_pattern in date_patterns:
+            date_match = date_pattern.match(line)
+            if date_match:
+                groups = date_match.groups()
+                if groups:
+                    current_date = groups[-1] if len(groups) >= 2 else groups[0]
+                is_date_line = True
                 break
+        if is_date_line:
+            continue  
 
-            unix_time = convert_to_unix(current_date, time_str)
-            if unix_time is not None:
-                is_media = detect_media(message)
-                remote_url = detect_remote_url(message) 
-                local_url = "FALSE"  # LINE does not support local url
+        message_added = False
+        skipped_line = False  # if 'sender' is empty then skip
+        for time_pattern in time_patterns:
+            time_match = time_pattern.match(line)
+            if time_match and current_date and current_doc_id:
+                groups = time_match.groups()
+                if len(groups) == 3:
+                    time_str, sender, message = groups
+                else:
+                    period, hour, minute, sender, message = groups
+                    hour = int(hour)
+                    if period == "下午" and hour != 12:
+                        hour += 12
+                    elif period == "上午" and hour == 12:
+                        hour = 0
+                    time_str = f"{hour:02}:{minute}"
 
-                messages.append([
-                    current_doc_id, unix_time, sender, message,
-                    False,  # isReply (default False)
-                    False,  # who_replied_to
-                    False, False,  # has_reactions, reactions
-                    False,  # translated (default False)
-                    is_media,  # is_media
-                    False,  # is_OCR (default False)
-                    local_url,  # local_url
-                    remote_url  # remote_url
-                ])
-                # add sender into chatname
-                participants_by_chat[current_doc_id].add(sender)
-                
-                last_sender = sender
-                last_message_index = len(messages) - 1
-                message_added = True
-            break  
-    if message_added or skipped_line:
-        continue  
+                if not sender.strip():
+                    skipped_line = True
+                    break
 
-    if last_message_index is not None:
-        messages[last_message_index][3] += " " + line
+                unix_time = convert_to_unix(current_date, time_str)
+                if unix_time is not None:
+                    is_media = detect_media(message)
+                    remote_url = detect_remote_url(message) 
+                    local_url = ""  # LINE does not support local url
+                    # updated this to be "" and not FALSE
 
-# write into chatlog CSV 
-with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
-    writer = csv.writer(csvfile)
-    writer.writerow([
-        "docNo", "time", "sender", "message", "isReply", "who_replied_to",
-        "has_reactions", "reactions", "translated", "is_media", "is_OCR", "local_url", "remote_url"
-    ])
-    writer.writerows(messages)
+                    messages.append([
+                        current_doc_id, unix_time, sender, message,
+                        False,  # isReply (default False)
+                        False,  # who_replied_to
+                        False, False,  # has_reactions, reactions
+                        False,  # translated (default False)
+                        is_media,  # is_media
+                        False,  # is_OCR (default False)
+                        local_url,  # local_url
+                        remote_url  # remote_url
+                    ])
+                    # add sender into chatname
+                    participants_by_chat[current_doc_id].add(sender)
 
-# export chatname.csv
-chat_rooms_file = os.path.join(BASE_PATH, "backend", "core", "out", "info", f"{platform}__{chatname}.info.csv")
-with open(chat_rooms_file, "w", newline="", encoding="utf-8") as csvfile:
-    writer = csv.writer(csvfile)
-    # write display name, internal chatname and participants into csv file
-    writer.writerow(["display_name", "internal_chat_name", "participants"])
-    for doc_id, chat_room_name in chat_rooms.items():
-        participants = ",".join(sorted(list(participants_by_chat.get(doc_id, []))))
-        writer.writerow([doc_id, chat_room_name, participants])
+                    last_sender = sender
+                    last_message_index = len(messages) - 1
+                    message_added = True
+                break  
+        if message_added or skipped_line:
+            continue  
+
+        if last_message_index is not None:
+            messages[last_message_index][3] += " " + line
+
+    # write into chatlog CSV 
+    with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([
+            "docNo", "time", "sender", "message", "isReply", "who_replied_to",
+            "has_reactions", "reactions", "translated", "is_media", "is_OCR", "local_url", "remote_url"
+        ])
+        writer.writerows(messages)
+
+    # export chatname.csv
+    with open(chat_rooms_file, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.writer(csvfile)
+        # write display name, internal chatname and participants into csv file
+        writer.writerow(["display_name", "internal_chat_name", "participants"])
+        for doc_id, chat_room_name in chat_rooms.items():
+            participants = ",".join(sorted(list(participants_by_chat.get(doc_id, []))))
+            writer.writerow([doc_id, chat_room_name, participants])
