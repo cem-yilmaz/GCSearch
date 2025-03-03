@@ -4,7 +4,7 @@ import Message from "./Message/Message";
 
 import "./GroupChatView.css";
 
-const GroupChatView = ({ messages, isLoadingChatMessages }) => {
+const GroupChatView = ({ messages, isLoadingChatMessages, currentUser }) => {
     const messagesContainerRef = useRef(null);
 
     useEffect(() => {
@@ -37,7 +37,9 @@ const GroupChatView = ({ messages, isLoadingChatMessages }) => {
                             sender={message.sender}
                             timestamp={message.timestamp}
                             image_url={message.image_url}
-                            isCurrentUser={message.isCurrentUser}
+                            isCurrentUser={
+                                currentUser !== null && message.sender === currentUser
+                            }
                         />
                     ))
                 )}
