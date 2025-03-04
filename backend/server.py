@@ -8,7 +8,9 @@ import csv
 app = Flask(__name__)
 CORS(app)
 
-searcher = Searcher()
+language = "english"
+
+searcher = Searcher(language=language)
 
 currently_supported_platforms = [
     "instagram",
@@ -31,7 +33,8 @@ def detect_encoding(file_path, sample_size=10000):
     with open(file_path, "rb") as f:
         raw_data = f.read(sample_size)
     result = chardet.detect(raw_data)
-    return result['encoding']
+    return result['encoding'] if language == "turkish" else "utf-8-sig"
+
 @app.route('/api/isAlive', methods=['GET'])
 def flask_isAlive():
     """

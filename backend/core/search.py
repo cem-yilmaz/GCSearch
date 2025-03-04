@@ -7,14 +7,14 @@ from datetime import datetime
 
 import chardet
 
-def detect_encoding(file_path, sample_size=10000):
+def detect_encoding(file_path, language, sample_size=10000):
     """
     Detects the encoding of a file by reading a small sample.
     """
     with open(file_path, "rb") as f:
         raw_data = f.read(sample_size)
     result = chardet.detect(raw_data)
-    return result['encoding']
+    return result['encoding'] if language == "turkish" else "utf-8-sig"
 
 class Searcher():
     """
@@ -25,6 +25,7 @@ class Searcher():
     """
     def __init__(self, language:str="english"):
         self.tokeniser = Tokeniser(language)
+        self.language = language
 
     def load_pii(self, pii_name:str, pii_dir:str="piis") -> dict:
         """
@@ -36,7 +37,7 @@ class Searcher():
         """
         relative_pii_dir = os.path.join(os.path.dirname(__file__), pii_dir)
         pii_path = f"{relative_pii_dir}/{pii_name}.pii.pkl"
-        encoding = detect_encoding(pii_path)
+        encoding = detect_encoding(pii_path, self.language)
         with open(pii_path, "rb") as f:
             pii = pickle.load(f)
             f.close()
@@ -144,7 +145,7 @@ class Searcher():
         """
         relative_out_dir = os.path.join(os.path.dirname(__file__), out_dir)
         info_path = f"{relative_out_dir}/info/{chatname}.info.csv"
-        encoding = detect_encoding(info_path)
+        encoding = detect_encoding(info_path, self.language)
         with open(info_path, "r", encoding=encoding, errors="replace") as f:
             display_name = f.readlines()[1].split(",")[1]
             f.close()
@@ -158,7 +159,7 @@ class Searcher():
             docno (int): The docno to search for.
             chatlog_path (str): The path to the chatlog to search in.
         """
-        encoding = detect_encoding(chatlog_path)
+        encoding = detect_encoding(chatlog_path, self.language)
         with open(chatlog_path, "r", encoding=encoding, errors="replace") as f:
             chatlog = f.readlines()
             f.close()
@@ -186,13 +187,13 @@ class Searcher():
         # First we need the proper chatname. This can be found at out_dir/info/<internal_chatname>.info.csv, under the "Display name" column
         info_path = f"{relative_out_dir}/info/{internal_chatname}.info.csv"
         print(f"DEBUG: Looking for file at {info_path}")
-        encoding = detect_encoding(info_path)
+        encoding = detect_encoding(info_path, self.language)
         with open(info_path, "r", encoding=encoding, errors="replace") as f:
             chatname = f.readlines()[1].split(",")[1]
             f.close()
         # Now we can get the remaining information by reading the chatlog, at out_dir/chatlogs/<internal_chatname>.chatlog.csv
         chatlog_path = f"{relative_out_dir}/chatlogs/{internal_chatname}.chatlog.csv"
-        encoding = detect_encoding(chatlog_path)
+        encoding = detect_encoding(chatlog_path, self.language)
         with open(chatlog_path, "r", encoding=encoding, errors="replace") as f:
             chatlog = f.readlines()
             f.close()
