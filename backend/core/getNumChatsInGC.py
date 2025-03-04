@@ -27,7 +27,6 @@ def flask_getNumChatsInGC(GC_name: str) -> int:
         return 0
 
 
-# **调用函数**
 result = flask_getNumChatsInGC("Group_name")  # Please fill in the specific group name you want to search
 print(f"Number of chats in GC: {result}")
 
