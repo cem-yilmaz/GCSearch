@@ -78,7 +78,7 @@ def getCurrentUser(platform:str="instagram") -> str | None:
     info_dir = os.path.join(script_dir, 'core/out/info')
     for chat in os.listdir(info_dir):
         if chat.endswith('.csv'):
-            with open(os.path.join(info_dir, chat), 'r') as f:
+            with open(os.path.join(info_dir, chat), 'r', encoding='utf-8-sig', errors='replace') as f:
                 reader = csv.reader(f)
                 rows = [row for row in reader]
                 f.close()
