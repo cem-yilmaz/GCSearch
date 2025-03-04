@@ -63,7 +63,7 @@ def flask_sortChatsByPlatform() -> dict[str, list[str]]:
     return sorted_chats
 
 
-def getCurrentUser(platform:str="instagram") -> str | None:
+def getCurrentUser(platform:str="instagram"):
     """
     Gets the current user by parsing the chats. It finds the sender present in each of the participants, which by the nature of \"someone's exported their data\". must be the current user
     
