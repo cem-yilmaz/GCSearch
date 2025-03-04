@@ -37,7 +37,7 @@ class WhatsappChatlogCreator:
         # Format: whatsapp_{9 random lowercase letters/digits}
         # Just an arbitrary one I picked
         random_code = ''.join(random.choices(string.ascii_lowercase + string.digits, k=9))
-        return f"whatsapp_{random_code}"
+        return f"{random_code}"
 
     def parse_line(self, line):
         # Parse a single line from the WhatsApp chat export using regex
@@ -103,7 +103,7 @@ class WhatsappChatlogCreator:
             display_name = chat_entries[0]["sender"]
 
         # Write the info CSV
-        info_csv_path = os.path.join(self.info_dir, f"info_{self.internal_chat_id}.csv")
+        info_csv_path = os.path.join(self.info_dir, f"whatsapp__{self.internal_chat_id}.info.csv")
         with open(info_csv_path, "w", encoding="utf-8", newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=["Internal chat name", "Display name", "Participants"])
             writer.writeheader()
@@ -114,7 +114,7 @@ class WhatsappChatlogCreator:
             })
 
         # Write the chatlog CSV
-        chatlog_csv_path = os.path.join(self.chatlogs_dir, f"chatlog_{self.internal_chat_id}.csv")
+        chatlog_csv_path = os.path.join(self.chatlogs_dir, f"whatsapp__{self.internal_chat_id}.chatlog.csv")
         with open(chatlog_csv_path, "w", encoding="utf-8", newline='') as csvfile:
             fields = [
                 "docNo", "time", "sender", "message", "isReply",
