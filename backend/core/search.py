@@ -192,6 +192,32 @@ class Searcher():
             reactions = "[No reactions]\n"
         return f"({chatname}) [{date}] {sender}: {text}\n{reactions}"
     
+    def flask_get_message_details_new(self, search_result:tuple[str, str, float], out_dir="out") -> tuple[str, str, str, str, str]:
+        internal_chatname, docNo, _ = search_result
+        relative_out_dir = os.path.join(os.path.dirname(__file__), out_dir)
+        # First we need the proper chatname. This can be found at out_dir/info/<internal_chatname>.info.csv, under the "Display name" column
+        info_path = f"{relative_out_dir}/info/{internal_chatname}.info.csv"
+        with open(info_path, "r", encoding='utf-8-sig', errors='replace') as f:
+            chatname = f.readlines()[1].split(",")[1]
+            f.close()
+        # Now we can get the remaining information by reading the chatlog, at out_dir/chatlogs/<internal_chatname>.chatlog.csv
+        chatlog_path = f"{relative_out_dir}/chatlogs/{internal_chatname}.chatlog.csv"
+        with open(chatlog_path, "r", encoding='utf-8-sig', errors='replace') as f:
+            chatlog = f.readlines()
+            f.close()
+        message = self.get_row_from_docno(docNo, chatlog_path).split(",") # we should only really get one message here, so as a hack we just get the first
+        date = self.convert_unix_timestamp_to_datetime(int(message[1]))
+        sender = message[2]
+        text = message[3]
+        if not text:
+            text = "[Media]"
+        has_reactions = message[6]
+        if has_reactions:
+            reactions = message[7] + "\n"
+        else:
+            reactions = "[No reactions]\n"
+        return (chatname, date, sender, text, reactions)
+
     def flask_get_message_details_from_search_result(self, search_result:tuple[str, str, float], out_dir="out") -> dict:
         """
         Given a search result, returns the message in a dictionary. 
@@ -212,16 +238,12 @@ class Searcher():
         """
         doc_id = search_result[1]
         # we cheat a bit by using the get_message_from_search_result function parsing the information that we need using regex
-        message = self.get_message_from_search_result(search_result, out_dir)
-        message_regex = r"\((?P<chatName>.+)\) \[(?P<timestamp>.+)\] (?P<sender>.+): (?P<message>.+)(?:\n(?P<reactions>.+))?" # this may need to be improved to handle other characters
-        match = re.match(message_regex, message)
-        if not match:
-            print(f"Error parsing message: {message}")
+        _, timestamp, sender, message_text, _ = self.flask_get_message_details_new(search_result, out_dir)
         return {
             "doc_id": doc_id,
-            "message": match.group("message"),
-            "sender": match.group("sender"),
-            "timestamp": match.group("timestamp"),
+            "message": message_text,
+            "sender": sender,
+            "timestamp": timestamp,
         }
 
     def search(self, query:str) -> None:
