@@ -7,8 +7,10 @@ import unicodedata
 from datetime import datetime
 
 # Adjust these paths to match the folder structure
-WHATSAPP_EXPORT_DIR = r"C:\Users\efeoz\Downloads\GCSearch-dev\backend\core\export\whatsapp"
-OUTPUT_DIR = r"C:\Users\efeoz\Downloads\GCSearch-dev\backend\core\out"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))  # /export_parsers directory
+BASE_DIR = os.path.dirname(os.path.dirname(SCRIPT_DIR))  # Go up to /backend directory
+WHATSAPP_EXPORT_DIR = os.path.join(BASE_DIR, "core", "export", "whatsapp")
+OUTPUT_DIR = os.path.join(BASE_DIR, "core", "export", "out")
 
 def remove_format_chars(text: str) -> str:
     # Remove zero-width or invisible format characters ([LTR] or [RTL] type)
@@ -162,5 +164,5 @@ def process_all_whatsapp_exports():
         creator = WhatsappChatlogCreator(full_path)
         creator.create_csv_files()
 
-if __name__ == "__main__":
+def generate_chatlog():
     process_all_whatsapp_exports()
