@@ -46,6 +46,9 @@ const GroupChatView = ({ messages, isLoadingChatMessages, currentUser, currentPI
                     ))
                 )}
             </div>
+            {isLoadingChatMessages || currentPII == null ? <div></div> : (
+                <button onClick={onGetLaterChats}>Later</button>
+            )}
         </div>
     )
 };

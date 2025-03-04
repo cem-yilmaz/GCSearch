@@ -317,9 +317,12 @@ def flask_GetChatsBetweenRangeForGC(include_media:bool=False):
         #if chat_data[9] and not include_media:
         #    continue
         chats.append(chat_data)
-        print(f"added chat +1")
+        print(f"added chat +1 (doc_id {doc_id})")
         chats_left_to_add -= 1
     print("Added the previous n chats")
+    # now we're out of this loop, we need to reverse the chats list
+    chats = chats[::-1] # this a dumb hack but it works!
+    
     # get the current chat
     chats_left_to_add = n+1 # reset to get n+1 more chats
     # now lets check the current chat
@@ -339,7 +342,7 @@ def flask_GetChatsBetweenRangeForGC(include_media:bool=False):
         #if chat_data['is_media'] and not include_media:
         #    continue
         chats.append(chat_data)
-        print(f"added chat +1")
+        print(f"added chat +1 (doc_id {doc_id})")
         chats_left_to_add -= 1
 
     return jsonify(chats)

@@ -148,8 +148,8 @@ const Main = () => {
                     isLoadingChatMessages={isLoadingChatMessages} 
                     currentUser={currentUser}
                     currentPII={currentChatPII}
-                    onGetEarlierChats={() => handleGetEarlierChats(currentChatPII, currentChatMessages[0].doc_id)} 
-                    onGetLaterChats={() => handleGetLaterChats(currentChatPII, currentChatMessages[currentChatMessages.length - 1].doc_id)}
+                    onGetEarlierChats={() => fetchChatRange(currentChatPII, currentChatMessages[0].doc_id, 10)} 
+                    onGetLaterChats={() => fetchChatRange(currentChatPII, currentChatMessages[currentChatMessages.length - 1].doc_id, 10)}
                 />
             </div>
             <SearchResults 
