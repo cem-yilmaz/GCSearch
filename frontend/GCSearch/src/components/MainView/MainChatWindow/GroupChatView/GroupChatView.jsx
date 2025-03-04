@@ -24,7 +24,7 @@ const GroupChatView = ({ messages, isLoadingChatMessages, currentUser, currentPI
     return (
         <div className="GroupChatView" ref={messagesContainerRef}>
             {isLoadingChatMessages || currentPII == null ? <div></div> : (
-                <button onClick={onGetEarlierChats}>Earlier</button>
+                <button onClick={onGetEarlierChats}>Later Messages</button>
             )}
             <div className="GroupChatMessages">
                 {isLoadingChatMessages ? (
@@ -47,7 +47,7 @@ const GroupChatView = ({ messages, isLoadingChatMessages, currentUser, currentPI
                 )}
             </div>
             {isLoadingChatMessages || currentPII == null ? <div></div> : (
-                <button onClick={onGetLaterChats}>Later</button>
+                <button onClick={onGetLaterChats}>Previous Messages</button>
             )}
         </div>
     )
