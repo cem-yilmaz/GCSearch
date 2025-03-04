@@ -132,7 +132,7 @@ class Searcher():
         """
         relative_out_dir = os.path.join(os.path.dirname(__file__), out_dir)
         info_path = f"{relative_out_dir}/info/{chatname}.info.csv"
-        with open(info_path, "r") as f:
+        with open(info_path, "r", encoding='utf-8-sig', errors='replace') as f:
             display_name = f.readlines()[1].split(",")[1]
             f.close()
         return display_name
@@ -145,7 +145,7 @@ class Searcher():
             docno (int): The docno to search for.
             chatlog_path (str): The path to the chatlog to search in.
         """
-        with open(chatlog_path, "r") as f:
+        with open(chatlog_path, "r", encoding='utf-8-sig', errors='replace') as f:
             chatlog = f.readlines()
             f.close()
         for row in chatlog:
@@ -171,12 +171,12 @@ class Searcher():
         relative_out_dir = os.path.join(os.path.dirname(__file__), out_dir)
         # First we need the proper chatname. This can be found at out_dir/info/<internal_chatname>.info.csv, under the "Display name" column
         info_path = f"{relative_out_dir}/info/{internal_chatname}.info.csv"
-        with open(info_path, "r") as f:
+        with open(info_path, "r", encoding='utf-8-sig', errors='replace') as f:
             chatname = f.readlines()[1].split(",")[1]
             f.close()
         # Now we can get the remaining information by reading the chatlog, at out_dir/chatlogs/<internal_chatname>.chatlog.csv
         chatlog_path = f"{relative_out_dir}/chatlogs/{internal_chatname}.chatlog.csv"
-        with open(chatlog_path, "r") as f:
+        with open(chatlog_path, "r", encoding='utf-8-sig', errors='replace') as f:
             chatlog = f.readlines()
             f.close()
         message = self.get_row_from_docno(docNo, chatlog_path).split(",") # we should only really get one message here, so as a hack we just get the first
