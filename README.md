@@ -17,7 +17,9 @@ GCSearch was created for **The University of Edinburgh's** "_Text Technologies f
 First, clone this repository (repo) locally.
 ## Installing required files
 ### Python
-In a terminal, navigate to where you cloned the repo, and install the `requirements.txt` file. **We strongly reccomend creating a virtual environment (`.venv`). You may have to install the VirtualEnv package if you do not already have it on your system (`pip install virtualenv`)**.
+In a terminal, navigate to where you cloned the repo, and install the `requirements.txt` file.
+
+**We strongly reccomend creating a virtual environment (`.venv`). You may have to install the VirtualEnv package if you do not already have it on your system (`pip install virtualenv`)**.
 ```
 python3 -m venv .venv
 ```
