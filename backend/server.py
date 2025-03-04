@@ -120,6 +120,7 @@ def flask_getAllParsedChatsForPlatform():
     data = request.get_json()
     platform = data['platform']
     sorted_chats = flask_sortChatsByPlatform()
+    print(f"DEBUG: platforms in fetched chats: {sorted_chats.keys()}")
     if platform not in sorted_chats:
         return jsonify({"error": f"Platform \"{platform}\" not supported. Currently supported platforms are: {currently_supported_platforms}"})
     return jsonify(sorted_chats[platform])
@@ -305,29 +306,31 @@ def flask_GetChatsBetweenRangeForGC(include_media:bool=False):
     chats = []
     # get the previous n chats
     chats_left_to_add = n
-    print(f"DEBUG: We are at doc_id {doc_id} in {pii_name}. We're going to add the next {n} chats before this.")
+    #print(f"DEBUG: We are at doc_id {doc_id} in {pii_name}. We're going to add the next {n} chats before this.")
     while chats_left_to_add > 0:
         doc_id -= 1
         if doc_id <= 0:
             break
-        print(f"We're now going to get the chat data from {pii_name} for chat {doc_id}")
+        #print(f"We're now going to get the chat data from {pii_name} for chat {doc_id}")
         chat_data = flask_getChatDataFromDocIDGivenPIIName(doc_id, pii_name)
         #input(f"chat_data: {chat_data}")
         # we current dont check for media messages
         #if chat_data[9] and not include_media:
         #    continue
         chats.append(chat_data)
-        print(f"added chat +1")
+        print(f"added chat +1 (doc_id {doc_id})")
         chats_left_to_add -= 1
     print("Added the previous n chats")
+    # now we're out of this loop, we need to reverse the chats list
+    chats = chats[::-1] # this a dumb hack but it works!
+    
     # get the current chat
-    chats_left_to_add = n+1 # reset to get n+1 more chats
-    # now lets check the current chat
+    
     doc_id = og_doc_id
     chat_data = flask_getChatDataFromDocIDGivenPIIName(doc_id, pii_name)
     
     chats.append(chat_data)
-    chats_left_to_add -= 1 # decrement to indicate we've added the current chat, otherwise we're getting n+1 ones ahead to make up for it
+    chats_left_to_add = n # decrement to indicate we've added the current chat, otherwise we're getting n+1 ones ahead to make up for it
     
     # now we get the next n chats
     chats_left_to_add = n
@@ -339,7 +342,7 @@ def flask_GetChatsBetweenRangeForGC(include_media:bool=False):
         #if chat_data['is_media'] and not include_media:
         #    continue
         chats.append(chat_data)
-        print(f"added chat +1")
+        print(f"added chat +1 (doc_id {doc_id})")
         chats_left_to_add -= 1
 
     return jsonify(chats)

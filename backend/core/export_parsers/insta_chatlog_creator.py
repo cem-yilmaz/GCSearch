@@ -197,6 +197,12 @@ class InstaChatlogCreator:
         """
         return [self.get_info_about_chat(chat) for chat in self.subdirs(self.raw_messages_dir)]
     
+    def make_safe_for_csv(self, string:str) -> str:
+        """
+        Makes a string safe for CSV file operation by escaping quotes, commas, and newlines.
+        """
+        return string.replace('"', '\"').replace(',', ' ').replace('\n', ' |')
+    
     def create_info_file_for_chat(self, chat_name:str) -> None:
         """
         Creates an `info.csv` file for a chat
@@ -205,7 +211,7 @@ class InstaChatlogCreator:
         with open(os.path.join(self.info_output_dir, f'{self.export_prefix}{internal_chat_name}.info.csv'), 'w') as f:
             writer = csv.writer(f)
             writer.writerow(['Internal chat name', 'Display name', 'Participants'])
-            writer.writerow([internal_chat_name, display_name, '['+', '.join(participants)+']'])
+            writer.writerow([(internal_chat_name), self.make_safe_for_csv(display_name), '['+', '.join(self.make_safe_for_csv(participants))+']'])
             f.close()
 
     def create_info_files_for_all_chats(self) -> None:

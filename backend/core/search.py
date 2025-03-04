@@ -284,6 +284,3 @@ class Searcher():
         results = self.search_all_piis_in_folder(query, top_n=n)
         messages = [self.flask_get_message_data(result) for result in results]
         return messages[:n]
-
-
-s = Searcher() # delete this line

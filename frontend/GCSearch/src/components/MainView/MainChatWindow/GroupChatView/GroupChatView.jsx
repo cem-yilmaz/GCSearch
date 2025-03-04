@@ -4,7 +4,7 @@ import Message from "./Message/Message";
 
 import "./GroupChatView.css";
 
-const GroupChatView = ({ messages, isLoadingChatMessages, currentUser }) => {
+const GroupChatView = ({ messages, isLoadingChatMessages, currentUser, currentPII, onGetEarlierChats, onGetLaterChats }) => {
     const messagesContainerRef = useRef(null);
 
     useEffect(() => {
@@ -22,14 +22,16 @@ const GroupChatView = ({ messages, isLoadingChatMessages, currentUser }) => {
     }, [messages, isLoadingChatMessages]);
     
     return (
-        <div className="GroupChatView">
+        <div className="GroupChatView" ref={messagesContainerRef}>
+            {isLoadingChatMessages || currentPII == null ? <div></div> : (
+                <button onClick={onGetEarlierChats}>Later Messages</button>
+            )}
             <div className="GroupChatMessages">
                 {isLoadingChatMessages ? (
                     <p className="loading">Loading...</p>
                 ) : messages.length === 0 ? (
                     <p className="no-messages">Click on a chat/result to view messages!</p>
                 ) : (
-                    console.log(`Got ${messages.length} messages: ${messages}`),
                     messages.map((message, index) => (
                         <Message
                             key={index}
@@ -44,6 +46,9 @@ const GroupChatView = ({ messages, isLoadingChatMessages, currentUser }) => {
                     ))
                 )}
             </div>
+            {isLoadingChatMessages || currentPII == null ? <div></div> : (
+                <button onClick={onGetLaterChats}>Previous Messages</button>
+            )}
         </div>
     )
 };

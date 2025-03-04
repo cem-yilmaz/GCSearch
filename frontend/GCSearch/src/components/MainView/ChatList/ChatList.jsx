@@ -100,7 +100,7 @@ const ChatList = ({ onSelectChat }) => {
         
     return (
         <div className="ChatList">
-            <PlatformSelector />
+            <PlatformSelector onPlatformSelected={platform => setSelectedPlatform(platform)} />
             <div className="group-chats">
                 {isLoading ? (
                     <p>Loading chats...</p>

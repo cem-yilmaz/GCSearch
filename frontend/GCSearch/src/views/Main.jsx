@@ -16,6 +16,8 @@ const Main = () => {
     const [isLoadingChatMessages, setIsLoadingChatMessages] = useState(false);
     const [currentChatMessages, setCurrentChatMessages] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
+    const [currentChatPII, setCurrentChatPII] = useState(null);
+    const [offset, setOffset] = useState(0);
     
     useEffect(() => {
         const checkServer = async () => {
@@ -32,6 +34,18 @@ const Main = () => {
         checkServer();
     }, []);
 
+    const handleGetEarlierChats = (pii, doc_id) => {
+        const newOffset = offset - 10;
+        setOffset(newOffset);
+        fetchChatRange(pii, doc_id, newOffset);
+    }
+
+    const handleGetLaterChats = (pii, doc_id) => {
+        const newOffset = offset + 10;
+        setOffset(newOffset);
+        fetchChatRange(pii, doc_id, newOffset);
+    }
+
     const fetchCurrentUser = async () => {
         try {
             const response = await fetch(`${API_URL}/GetCurrentUser`);
@@ -47,8 +61,11 @@ const Main = () => {
     console.log(`Server status: ${serverStatus}`);
 
     const fetchChatRange = async (pii_name, doc_id, n) => {
+        // this function is called when explicitly selecting a chat from the chat list or search results
         console.log(`Fetching chat range for ${pii_name} from ${doc_id} with n=${n}`);
         setIsLoadingChatMessages(true);
+        setCurrentChatPII(pii_name);
+        setOffset(n);
         try {
             const body = {
                 pii_name: pii_name,
@@ -126,7 +143,14 @@ const Main = () => {
             <div className="central-container">
                 <h1>GCSearch</h1>
                 <SearchBar onSearch={handleSearch}/>
-                <MainChatWindow messages={currentChatMessages} isLoadingChatMessages={isLoadingChatMessages} currentUser={currentUser} />
+                <MainChatWindow 
+                    messages={currentChatMessages} 
+                    isLoadingChatMessages={isLoadingChatMessages} 
+                    currentUser={currentUser}
+                    currentPII={currentChatPII}
+                    onGetEarlierChats={() => fetchChatRange(currentChatPII, currentChatMessages[0].doc_id, 10)} 
+                    onGetLaterChats={() => fetchChatRange(currentChatPII, currentChatMessages[currentChatMessages.length - 1].doc_id, 10)}
+                />
             </div>
             <SearchResults 
                 results={searchResults}
