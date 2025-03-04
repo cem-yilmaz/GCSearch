@@ -8,7 +8,7 @@ import csv
 app = Flask(__name__)
 CORS(app)
 
-searcher = Searcher()
+searcher = Searcher("chinese")
 
 currently_supported_platforms = [
     "instagram",

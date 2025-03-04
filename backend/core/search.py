@@ -211,7 +211,7 @@ class Searcher():
         text = message[3]
         if not text:
             text = "[Media]"
-        has_reactions = message[6]
+        has_reactions = False
         if has_reactions:
             reactions = message[7] + "\n"
         else:
