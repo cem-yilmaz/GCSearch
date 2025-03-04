@@ -305,12 +305,12 @@ def flask_GetChatsBetweenRangeForGC(include_media:bool=False):
     chats = []
     # get the previous n chats
     chats_left_to_add = n
-    print(f"DEBUG: We are at doc_id {doc_id} in {pii_name}. We're going to add the next {n} chats before this.")
+    #print(f"DEBUG: We are at doc_id {doc_id} in {pii_name}. We're going to add the next {n} chats before this.")
     while chats_left_to_add > 0:
         doc_id -= 1
         if doc_id <= 0:
             break
-        print(f"We're now going to get the chat data from {pii_name} for chat {doc_id}")
+        #print(f"We're now going to get the chat data from {pii_name} for chat {doc_id}")
         chat_data = flask_getChatDataFromDocIDGivenPIIName(doc_id, pii_name)
         #input(f"chat_data: {chat_data}")
         # we current dont check for media messages
