@@ -166,8 +166,8 @@ class PIIConstructor:
         except NameError:
             script_dir = Path(os.path.abspath('backend/core'))
 
-        input_path = script_dir / input_dir
-        output_path = script_dir / output_dir
+        input_path = Path(r"C:\Users\efeoz\Desktop\GCSearch\GCSearch\backend\core\out\chatlogs")
+        output_path = Path(r"C:\Users\efeoz\Desktop\GCSearch\GCSearch\backend\core\piis")
 
         print(f"DEBUG: reading chatlogs from {input_path}, and writing PIIs to {output_path}")
 

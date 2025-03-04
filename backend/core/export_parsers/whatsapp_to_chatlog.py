@@ -10,7 +10,7 @@ from datetime import datetime
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))  # /export_parsers directory
 BASE_DIR = os.path.dirname(os.path.dirname(SCRIPT_DIR))  # Go up to /backend directory
 WHATSAPP_EXPORT_DIR = os.path.join(BASE_DIR, "core", "export", "whatsapp")
-OUTPUT_DIR = os.path.join(BASE_DIR, "core", "export", "out")
+OUTPUT_DIR = os.path.join(BASE_DIR, "core", "out")
 
 def remove_format_chars(text: str) -> str:
     # Remove zero-width or invisible format characters ([LTR] or [RTL] type)
@@ -40,18 +40,17 @@ class WhatsappChatlogCreator:
         return f"{random_code}"
 
     def parse_line(self, line):
-        # Parse a single line from the WhatsApp chat export using regex
-        # Expected format: [DD/MM/YYYY, HH:MM:SS] Sender: Message
         pattern = r"^(?:\[[A-Z]+\])?\[(\d{2}/\d{2}/\d{4}),\s(\d{2}:\d{2}:\d{2})\]\s(~?[^:]+):\s(.*)$"
         match = re.match(pattern, line)
         if match:
             date_str, time_str, sender, message = match.groups()
             try:
                 dt = datetime.strptime(f"{date_str} {time_str}", "%d/%m/%Y %H:%M:%S")
-                # Adjust the date format to match the expected format
+                unix_time = int(dt.timestamp())  # Convert to Unix timestamp
             except ValueError:
-                dt = None # if invalid date format
-            return {"datetime": dt, "sender": sender.strip(), "message": message}
+                unix_time = None  # Handle invalid timestamps
+
+            return {"datetime": unix_time, "sender": sender.strip(), "message": message}
         return None
 
     def process_export(self):
@@ -132,7 +131,7 @@ class WhatsappChatlogCreator:
 
                 writer.writerow({
                     "docNo": docNum,
-                    "time": entry["datetime"].strftime("%Y-%m-%d %H:%M:%S") if entry["datetime"] else "",
+                    "time": int(entry["datetime"]) if isinstance(entry["datetime"], (int, float)) else "",
                     "sender": entry["sender"],
                     "message": entry["message"],
                     "isReply": False,

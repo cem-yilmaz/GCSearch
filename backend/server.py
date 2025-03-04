@@ -22,7 +22,16 @@ currently_supported_languages = [
     "zh-cn", # Simplified Chinese
     "zh-tw", # Traditional Chinese
 ]
+import chardet
 
+def detect_encoding(file_path, sample_size=10000):
+    """
+    Detects the encoding of a file by reading a small sample.
+    """
+    with open(file_path, "rb") as f:
+        raw_data = f.read(sample_size)
+    result = chardet.detect(raw_data)
+    return result['encoding']
 @app.route('/api/isAlive', methods=['GET'])
 def flask_isAlive():
     """
@@ -76,9 +85,10 @@ def getCurrentUser(platform:str="instagram") -> str | None:
     script_dir = os.path.dirname(__name__)
     # info is in ./core/out/info
     info_dir = os.path.join(script_dir, 'core/out/info')
+    encoding = detect_encoding(info_dir)
     for chat in os.listdir(info_dir):
         if chat.endswith('.csv'):
-            with open(os.path.join(info_dir, chat), 'r', encoding='utf-8-sig', errors='replace') as f:
+            with open(os.path.join(info_dir, chat), 'r', encoding=encoding, errors='replace') as f:
                 reader = csv.reader(f)
                 rows = [row for row in reader]
                 f.close()
@@ -134,7 +144,8 @@ def flask_getDisplayNameFromChat(chat_name:str) -> str:
     Returns:
         display_name: (str) the display name of the chat
     """
-    with open(f'core/out/info/{chat_name}.info.csv', 'r') as f:
+    encoding = detect_encoding(f'core/out/info/{chat_name}.info.csv')
+    with open(f'core/out/info/{chat_name}.info.csv', 'r', encoding=encoding, errors="replace") as f:
         reader = csv.reader(f)
         display_name = [row for row in reader][1][1]
         return display_name
@@ -148,7 +159,8 @@ def flask_getLastMessageFromChat(chat_name:str) -> dict:
     Returns:
         last_message: (dict) { "doc_id": int, "sender": str, "message": str, "timestamp": int }
     """
-    with open(f'core/out/chatlogs/{chat_name}.chatlog.csv', 'r') as f:
+    encoding = detect_encoding(f'core/out/chatlogs/{chat_name}.chatlog.csv')
+    with open(f'core/out/chatlogs/{chat_name}.chatlog.csv', 'r', encoding=encoding, errors="replace") as f:
         reader = csv.reader(f)
         rows = [row for row in reader]
         if len(rows) > 1:
@@ -237,7 +249,8 @@ def flask_getNumChatsInGC(GC_name:str) -> int:
     Returns:
         num_chats: (int) number of chats in the GC
     """
-    with open(f'core/out/chatlogs/{GC_name}.chatlog.csv', 'r') as f:
+    encoding=detect_encoding(f'core/out/chatlogs/{GC_name}.chatlog.csv')
+    with open(f'core/out/chatlogs/{GC_name}.chatlog.csv', 'r', encoding=encoding,errors="replace") as f:
         reader = csv.reader(f)
         num_chats = len([row for row in reader]) - 1
         f.close()

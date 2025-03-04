@@ -3,12 +3,12 @@ import React from "react";
 import "./GroupChat.css";
 
 const getDateFromTimestamp = (timestamp) => {
-    const date = new Date(timestamp);
+    const date = new Date(timestamp * 1000);
     return date.toDateString();
 }
 
 const getTimeFromTimestamp = (timestamp) => {
-    const date = new Date(timestamp);
+    const date = new Date(timestamp * 1000);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 }
 
