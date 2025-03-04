@@ -7,7 +7,7 @@ thulac_model = thulac(seg_only=True)
 script_dir = os.path.dirname(os.path.abspath(__file__))
 stopwords_file_name = os.path.join(script_dir, "stopwords", "hit_stopwords.txt")
 
-with open(stopwords_file_name, "r", encoding="utf-8") as f:
+with open(stopwords_file_name, "r", encoding="utf-8-sig") as f:
     stopwords = set(f.read().splitlines())
     f.close()
 

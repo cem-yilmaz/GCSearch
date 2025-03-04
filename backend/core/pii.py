@@ -27,8 +27,10 @@ class PIIConstructor:
         for row in rows:
             docNo = row["docNo"]
             message = row["message"]
-            tokens = self.tokeniser.tokenise(message)
-
+            try:
+                tokens = self.tokeniser.tokenise(message)
+            except:
+                continue
             for position, term in enumerate(tokens, 1):
                 if term not in index:
                     index[term] = {"document_frequency": 0, "postings": {}}
@@ -71,7 +73,7 @@ class PIIConstructor:
             num_threads = 4
 
         # Read all rows first
-        with open(csv_file_path, 'r', encoding='utf-8') as f:
+        with open(csv_file_path, 'r', encoding='utf-8-sig') as f:
             reader = csv.DictReader(f)
             rows = list(reader)
 
