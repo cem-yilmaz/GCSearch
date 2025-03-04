@@ -4,7 +4,6 @@ from core.search import Searcher
 
 import os
 import csv
-import datetime
 
 app = Flask(__name__)
 CORS(app)

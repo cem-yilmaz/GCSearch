@@ -7,14 +7,18 @@ import "./ChatList.css";
 
 const API_URL = "http://localhost:5000/api";
 
-const ChatList = ({ onSelectChat }) => {
+const ChatList = ({ onSelectChat, fetchCurrentUser }) => {
     const [groupChats, setGroupChats] = useState([]);
     const [selectedPlatform, setSelectedPlatform] = useState("instagram");
     const [isLoading, setIsLoading] = useState(true);
 
+    console.log("Chatlist");
+    console.log(selectedPlatform);
+
     useEffect(() => {
         const fetchGroupChats = async () => {
             setIsLoading(true);
+            fetchCurrentUser(selectedPlatform);
             try {
                 // get all chat IDs for the selected platform
                 const chatIdsResponse = await fetch(`${API_URL}/GetAllParsedChatsForPlatform`, {

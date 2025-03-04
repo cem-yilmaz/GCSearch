@@ -24,7 +24,6 @@ const Main = () => {
             try {
                 const response = await fetch(`${API_URL}/isAlive`);
                 setServerStatus(`Connected (${response.status})`);
-                fetchCurrentUser();
             } catch (error) {
                 console.error(`Error connecting to server: ${error}`);
                 setServerStatus("Failed to connect");
@@ -139,6 +138,7 @@ const Main = () => {
                         10
                     )
                 }
+                fetchCurrentUser={fetchCurrentUser}
             />
             <div className="central-container">
                 <h1>GCSearch</h1>
