@@ -134,7 +134,7 @@ def flask_getDisplayNameFromChat(chat_name:str) -> str:
     Returns:
         display_name: (str) the display name of the chat
     """
-    with open(f'core/out/info/{chat_name}.info.csv', 'r') as f:
+    with open(f'core/out/info/{chat_name}.info.csv', 'r', encoding='utf-8-sig', errors='replace') as f:
         reader = csv.reader(f)
         display_name = [row for row in reader][1][1]
         return display_name
@@ -148,7 +148,7 @@ def flask_getLastMessageFromChat(chat_name:str) -> dict:
     Returns:
         last_message: (dict) { "doc_id": int, "sender": str, "message": str, "timestamp": int }
     """
-    with open(f'core/out/chatlogs/{chat_name}.chatlog.csv', 'r') as f:
+    with open(f'core/out/chatlogs/{chat_name}.chatlog.csv', 'r', encoding='utf-8-sig', errors='replace') as f:
         reader = csv.reader(f)
         rows = [row for row in reader]
         if len(rows) > 1:
@@ -237,7 +237,7 @@ def flask_getNumChatsInGC(GC_name:str) -> int:
     Returns:
         num_chats: (int) number of chats in the GC
     """
-    with open(f'core/out/chatlogs/{GC_name}.chatlog.csv', 'r') as f:
+    with open(f'core/out/chatlogs/{GC_name}.chatlog.csv', 'r', encoding='utf-8-sig', errors='replace') as f:
         reader = csv.reader(f)
         num_chats = len([row for row in reader]) - 1
         f.close()
