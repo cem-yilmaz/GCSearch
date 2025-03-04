@@ -324,3 +324,52 @@ class Searcher():
         results = self.search_all_piis_in_folder(query, top_n=n)
         messages = [self.flask_get_message_data(result) for result in results]
         return messages[:n]
+    
+    def proximity_search(self, terms:list[str], positional_inverted_index:dict, n:int, top_n:int=25) -> list[tuple[int, float]]:
+        """
+        Performs a proximity search for the terms in the given positional inverted index.
+
+        Args:
+            terms (list[str]): The terms to search for.
+            positional_inverted_index (dict): The positional inverted index to search in.
+            n (int): The proximity parameter.
+            top_n (int): The number of results to return. Default is 10.
+
+        Returns:
+            (list[tuple[int, float]]) A list of the top N results for the given queries in the format `(docNo, score)`.
+        """
+
+        doc_scores = {}
+
+        postings_by_terms = {term: positional_inverted_index[term]["postings"] for term in terms if term in positional_inverted_index and "postings" in positional_inverted_index[term]} # love a good dict comprehension
+        if not postings_by_terms:
+            return []
+        
+        docs_containing_some_term = set()
+        for posting in postings_by_terms.values():
+            docs_containing_some_term.update(posting.keys())
+
+        for docNo in docs_containing_some_term:
+            positions_by_term = []
+            for term in terms:
+                if term in positions_by_term[term]:
+                    positions_by_term.append(positions_by_term[term])
+                else:
+                    positions_by_term = []
+                    break
+            if not positions_by_term:
+                continue # avoid checking docs that don't contain all terms
+            
+            score_for_doc = 0
+
+            for i in range(len(positions_by_term[0]) - 1):
+                for j in positions_by_term[i]:
+                    for k in positions_by_term[i + 1]:
+                        if abs(j - k) <= n:
+                            score_for_doc += 1
+                            
+
+            if score_for_doc > 0:
+                doc_scores[docNo] = doc_scores.get(docNo, 0) + score_for_doc
+
+        return sorted(doc_scores.items(), key=lambda x: x[1], reverse=True)[:top_n]
