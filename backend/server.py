@@ -30,10 +30,13 @@ def detect_encoding(file_path, sample_size=10000):
     """
     Detects the encoding of a file by reading a small sample.
     """
-    with open(file_path, "rb") as f:
-        raw_data = f.read(sample_size)
-    result = chardet.detect(raw_data)
-    return result['encoding'] if language == "turkish" else "utf-8-sig"
+    if language != "turkish":
+        return "utf-8-sig"
+    else:
+        with open(file_path, "rb") as f:
+            raw_data = f.read(sample_size)
+        result = chardet.detect(raw_data)
+        return result['encoding']
 
 @app.route('/api/isAlive', methods=['GET'])
 def flask_isAlive():
