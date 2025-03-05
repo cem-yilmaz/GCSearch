@@ -1,4 +1,4 @@
-from tokenisers.ttds_tokeniser import Tokeniser
+from core.tokenisers.ttds_tokeniser import Tokeniser
 import csv
 import os
 from pathlib import Path
@@ -171,7 +171,7 @@ class PIIConstructor:
         input_path = script_dir / input_dir
         output_path = script_dir / output_dir
 
-        print(f"DEBUG: reading chatlogs from {input_path}, and writing PIIs to {output_path}")
+        input(f"Reading chatlogs from {input_path}, and writing PIIs to {output_path}. Please terminate program execution (Ctrl+C) if this is incorrect. Press Enter to continue otherwise.")
 
         chatlogs = os.listdir(input_path)
         num_logs = len(chatlogs)
