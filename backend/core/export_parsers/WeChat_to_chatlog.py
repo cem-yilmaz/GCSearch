@@ -83,7 +83,7 @@ class WeChatChatlogCreator:
         display_name = chat_entries[0]["sender"] if len(participants) != 2 else " & ".join(sorted(participants))
 
         # Generate `info.csv`
-        info_csv_path = os.path.join(self.info_dir, f"info_{self.internal_chat_id}.csv")
+        info_csv_path = os.path.join(self.info_dir, f"{self.internal_chat_id}.info.csv")
         with open(info_csv_path, "w", encoding="utf-8", newline='') as csvfile:
             fieldnames = ["Internal chat name", "Display name", "Participants"]
             writer = pd.DataFrame([{
@@ -95,7 +95,7 @@ class WeChatChatlogCreator:
         print(f"✅ Generated info.csv: {info_csv_path}")
 
         # Generate `chatlog.csv`
-        chatlog_csv_path = os.path.join(self.chatlogs_dir, f"chatlog_{self.internal_chat_id}.csv")
+        chatlog_csv_path = os.path.join(self.chatlogs_dir, f"{self.internal_chat_id}.info.csv")
         df_transformed = pd.DataFrame(chat_entries)
         df_transformed.to_csv(chatlog_csv_path, index=False, encoding="utf-8-sig")
         print(f"✅ Generated chatlog.csv: {chatlog_csv_path}")
