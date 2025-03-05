@@ -4,11 +4,14 @@ from core.search import Searcher
 
 import os
 import csv
+import sys
+
+csv.field_size_limit(sys.maxsize)
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)#, resources={r"/api/*": {"origins": "*"}})
 
-language = "english"
+language = "traditional_chinese"
 
 searcher = Searcher(language=language)
 

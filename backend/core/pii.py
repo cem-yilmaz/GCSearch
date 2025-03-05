@@ -6,6 +6,9 @@ import concurrent.futures
 from functools import reduce
 import math
 import pickle
+import sys
+
+csv.field_size_limit(sys.maxsize)
 
 class PIIConstructor:
     """
