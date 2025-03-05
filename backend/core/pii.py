@@ -8,7 +8,11 @@ import math
 import pickle
 import sys
 
-csv.field_size_limit(sys.maxsize)
+try:
+    csv.field_size_limit(sys.maxsize)  # may lead OverflowError
+except OverflowError:
+    csv.field_size_limit(2147483647)  # 2GB
+
 
 class PIIConstructor:
     """
