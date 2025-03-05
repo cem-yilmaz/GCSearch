@@ -104,7 +104,7 @@ const ChatList = ({ onSelectChat, fetchCurrentUser }) => {
         
     return (
         <div className="ChatList">
-            <PlatformSelector onPlatformSelected={platform => setSelectedPlatform(platform)} />
+            <PlatformSelector onPlatformSelected={platform => setSelectedPlatform(platform)} selectedPlatform={selectedPlatform} />
             <div className="group-chats">
                 {isLoading ? (
                     <p>Loading chats...</p>
