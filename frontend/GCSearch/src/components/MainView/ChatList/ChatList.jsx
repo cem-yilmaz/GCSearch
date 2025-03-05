@@ -5,7 +5,7 @@ import GroupChat from "./GroupChat/GroupChat";
 
 import "./ChatList.css";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "http://127.0.0.1:5000/api";
 
 const ChatList = ({ onSelectChat, fetchCurrentUser }) => {
     const [groupChats, setGroupChats] = useState([]);
@@ -34,7 +34,8 @@ const ChatList = ({ onSelectChat, fetchCurrentUser }) => {
                 }
             
                 const chatIds = await chatIdsResponse.json();
-        
+                console.info("We are now going to print chatids");
+                console.info(`chatids = ${chatIds}`);
                 // get details for each chat ID
                 const chatsData = await Promise.all(chatIds.map(async (chatId) => {
                     try {
@@ -104,7 +105,7 @@ const ChatList = ({ onSelectChat, fetchCurrentUser }) => {
         
     return (
         <div className="ChatList">
-            <PlatformSelector onPlatformSelected={platform => setSelectedPlatform(platform)} />
+            <PlatformSelector onPlatformSelected={platform => setSelectedPlatform(platform)} selectedPlatform={selectedPlatform} />
             <div className="group-chats">
                 {isLoading ? (
                     <p>Loading chats...</p>

@@ -4,11 +4,33 @@ from core.search import Searcher
 
 import os
 import csv
+import sys
+import argparse
+
+csv.field_size_limit(sys.maxsize)
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)#, resources={r"/api/*": {"origins": "*"}})
 
-searcher = Searcher("chinese")
+currently_supported_languages = [
+    "english", # English
+    "chinese", # Simplified Chinese
+    "traditional_chinese", # Traditional Chinese
+    "turkish" # Turkish
+]
+
+parser = argparse.ArgumentParser(description='GCSearch Server')
+parser.add_argument('--language', type=str, default='english', help='Language for the searcher')
+args = parser.parse_args()
+if args.language not in currently_supported_languages:
+    print(f"Unsupported language: {args.language}. Currently supported languages are: {', '.join(currently_supported_languages)}")
+    language = "english"
+    print(f"Defaulting to {language}")
+else:
+    language = args.language
+
+searcher = Searcher(language=language)
+print(f"GCSearch Server Initialised with language: {language}")
 
 currently_supported_platforms = [
     "instagram",
@@ -17,11 +39,19 @@ currently_supported_platforms = [
     "line"
 ]
 
-currently_supported_languages = [
-    "en", # English
-    "zh-cn", # Simplified Chinese
-    "zh-tw", # Traditional Chinese
-]
+import chardet
+
+def detect_encoding(file_path, sample_size=10000):
+    """
+    Detects the encoding of a file by reading a small sample.
+    """
+    if language != "turkish":
+        return "utf-8-sig"
+    else:
+        with open(file_path, "rb") as f:
+            raw_data = f.read(sample_size)
+        result = chardet.detect(raw_data)
+        return result['encoding']
 
 @app.route('/api/isAlive', methods=['GET'])
 def flask_isAlive():
@@ -76,9 +106,10 @@ def getCurrentUser(platform:str="instagram"):
     script_dir = os.path.dirname(__name__)
     # info is in ./core/out/info
     info_dir = os.path.join(script_dir, 'core/out/info')
+    encoding = detect_encoding(info_dir)
     for chat in os.listdir(info_dir):
         if chat.endswith('.csv'):
-            with open(os.path.join(info_dir, chat), 'r', encoding='utf-8-sig', errors='replace') as f:
+            with open(os.path.join(info_dir, chat), 'r', encoding=encoding, errors='replace') as f:
                 reader = csv.reader(f)
                 rows = [row for row in reader]
                 f.close()
@@ -134,7 +165,8 @@ def flask_getDisplayNameFromChat(chat_name:str) -> str:
     Returns:
         display_name: (str) the display name of the chat
     """
-    with open(f'core/out/info/{chat_name}.info.csv', 'r', encoding='utf-8-sig', errors='replace') as f:
+    encoding = detect_encoding(f'core/out/info/{chat_name}.info.csv')
+    with open(f'core/out/info/{chat_name}.info.csv', 'r', encoding=encoding, errors="replace") as f:
         reader = csv.reader(f)
         display_name = [row for row in reader][1][1]
         return display_name
@@ -148,7 +180,8 @@ def flask_getLastMessageFromChat(chat_name:str) -> dict:
     Returns:
         last_message: (dict) { "doc_id": int, "sender": str, "message": str, "timestamp": int }
     """
-    with open(f'core/out/chatlogs/{chat_name}.chatlog.csv', 'r', encoding='utf-8-sig', errors='replace') as f:
+    encoding = detect_encoding(f'core/out/chatlogs/{chat_name}.chatlog.csv')
+    with open(f'core/out/chatlogs/{chat_name}.chatlog.csv', 'r', encoding=encoding, errors="replace") as f:
         reader = csv.reader(f)
         rows = [row for row in reader]
         if len(rows) > 1:
@@ -200,6 +233,25 @@ def flask_GetTopNResultsFromSearch():
     print(f"DEBUG: got {len(top_n_results)} results for query \"{query}\"")
     return jsonify(top_n_results)
 
+@app.route('/api/ProximitySearch', methods=['POST'])
+def flask_ProximitySearch():
+    """
+    Performs a proximity search for a given query and range.
+
+    Args:
+        query: (str) search query
+        range: (int) range to search within
+
+    Returns:
+        results: (dict) { doc_id (int): score (int):, ... }
+    """
+    data = request.get_json()
+    query = data['query']
+    range = int(data['range'])
+    results = searcher.flask_prox_search(query, range)
+    print(f"DEBUG: got {len(results)} results for query \"{query}\"")
+    return jsonify(results)
+
 @app.route('/api/GetMetaChatDataFromPIIName', methods=['POST'])
 def flask_GetMetaChatDataFromPIIName():
     """
@@ -237,13 +289,12 @@ def flask_getNumChatsInGC(GC_name:str) -> int:
     Returns:
         num_chats: (int) number of chats in the GC
     """
-    with open(f'core/out/chatlogs/{GC_name}.chatlog.csv', 'r', encoding='utf-8-sig', errors='replace') as f:
+    encoding=detect_encoding(f'core/out/chatlogs/{GC_name}.chatlog.csv')
+    with open(f'core/out/chatlogs/{GC_name}.chatlog.csv', 'r', encoding=encoding,errors="replace") as f:
         reader = csv.reader(f)
         num_chats = len([row for row in reader]) - 1
         f.close()
-    return num_chats
-        
-    
+    return num_chats   
 
 def flask_getChatDataFromDocIDGivenPIIName(doc_id, pii_name):
     """

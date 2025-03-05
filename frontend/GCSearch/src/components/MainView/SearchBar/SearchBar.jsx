@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 
 import "./SearchBar.css";
 
-const SearchBar = ({ onSearch }) => {
+const SearchBar = ({ onSearch, onProxSearch }) => {
     const [query, setQuery] = useState("");
+    const [isProxSearch, setIsProxSearch] = useState(false);
+    const [rangeValue, setRangeValue] = useState(10);
 
     /* //debounce
     useEffect(() => {
@@ -26,8 +28,13 @@ const SearchBar = ({ onSearch }) => {
 
     const handleKeyPress = (e) => {
         if (e.key === 'Enter') {
-            console.log("Performing Search")
-            onSearch(query);
+            if (isProxSearch) {
+                console.log(`Proximity search with range: ${rangeValue}, and query: ${query}`);
+                onProxSearch(query, rangeValue);
+            } else {
+                console.log(`Normal search with query: ${query}`);
+                onSearch(query);                
+            }
         }
     }
 
@@ -41,6 +48,24 @@ const SearchBar = ({ onSearch }) => {
                 onChange={handleInputChange}
                 onKeyDown={handleKeyPress}
             />
+            <label>
+                <input
+                    type="checkbox"
+                    checked={isProxSearch}
+                    onChange={() => setIsProxSearch(!isProxSearch)}
+                />
+                Proximity Search
+            </label>
+            {isProxSearch && (
+                <input
+                    type="number"
+                    min={1}
+                    max={25}
+                    value={rangeValue}
+                    onChange={(e) => setRangeValue(e.target.value)}
+                    style={{ width: "50px", marginLeft: "10px" }}
+                />
+            )}
         </div>
     )
 };

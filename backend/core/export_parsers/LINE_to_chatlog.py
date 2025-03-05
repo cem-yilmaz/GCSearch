@@ -6,7 +6,7 @@ from datetime import datetime
 # input file and output file
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
 input_file = os.path.join(BASE_PATH, "export", "line", "LINE__chat.txt")  # input file path
-platform="LINE"
+platform="line"
 chatname="Chat 1"
 output_file = os.path.join(BASE_PATH,  "out", "chatlogs", f"{platform}__{chatname}.chatlog.csv")  # output file path
 
@@ -60,16 +60,15 @@ def detect_remote_url(message):
     media_urls = [url for url in urls if url.lower().endswith(media_extensions)]
     return media_urls[0] if media_urls else "FALSE"
 
-def generate_chatlog():
-    # save the messages
+
+def generate_chatlog():  
     messages = []
-    current_doc_id = None
     current_date = None
     last_sender = None
     last_message_index = None  
-
-    # keep doc_id
     chat_counter = 0
+    message_counter=0
+
     chat_rooms = {} 
     with open(input_file, "r", encoding="utf-8") as file:
         lines = file.readlines()
@@ -79,19 +78,16 @@ def generate_chatlog():
         if not line:
             continue
 
-        # check title_line
+        
         chat_match = chat_id_pattern.match(line)
         if chat_match:
             chat_room_name = chat_match.group(1).strip()
             chat_counter += 1
-            current_doc_id = f"doc_{chat_counter}"
-            # save chatname
-            chat_rooms[current_doc_id] = chat_room_name
-            # initialize participant[]
-            participants_by_chat[current_doc_id] = set()
+            chat_rooms[chat_counter] = chat_room_name
+            participants_by_chat[chat_counter] = set()
             continue
 
-        # chech date_line
+        
         is_date_line = False
         for date_pattern in date_patterns:
             date_match = date_pattern.match(line)
@@ -105,10 +101,11 @@ def generate_chatlog():
             continue  
 
         message_added = False
-        skipped_line = False  # if 'sender' is empty then skip
+        skipped_line = False  # 
+
         for time_pattern in time_patterns:
             time_match = time_pattern.match(line)
-            if time_match and current_date and current_doc_id:
+            if time_match and current_date:
                 groups = time_match.groups()
                 if len(groups) == 3:
                     time_str, sender, message = groups
@@ -126,37 +123,40 @@ def generate_chatlog():
                     break
 
                 unix_time = convert_to_unix(current_date, time_str)
+                unix_time *= 1000
                 if unix_time is not None:
                     is_media = detect_media(message)
                     remote_url = detect_remote_url(message) 
-                    local_url = ""  # LINE does not support local url
-                    # updated this to be "" and not FALSE
+                    local_url = ""  # 
+
+                    # 
+                    message_counter += 1
+                    doc_id = message_counter
 
                     messages.append([
-                        current_doc_id, unix_time, sender, message,
-                        False,  # isReply (default False)
+                        doc_id, unix_time, sender, message,
+                        False,  # isReply
                         False,  # who_replied_to
                         False, False,  # has_reactions, reactions
-                        False,  # translated (default False)
+                        False,  # translated
                         is_media,  # is_media
-                        False,  # is_OCR (default False)
+                        False,  # is_OCR
                         local_url,  # local_url
                         remote_url  # remote_url
                     ])
-                    # add sender into chatname
-                    participants_by_chat[current_doc_id].add(sender)
-
+                    
                     last_sender = sender
                     last_message_index = len(messages) - 1
                     message_added = True
                 break  
+
         if message_added or skipped_line:
             continue  
 
         if last_message_index is not None:
             messages[last_message_index][3] += " " + line
 
-    # write into chatlog CSV 
+    
     with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow([
@@ -165,11 +165,10 @@ def generate_chatlog():
         ])
         writer.writerows(messages)
 
-    # export chatname.csv
+    #  CSV
     with open(chat_rooms_file, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
-        # write display name, internal chatname and participants into csv file
         writer.writerow(["display_name", "internal_chat_name", "participants"])
-        for doc_id, chat_room_name in chat_rooms.items():
-            participants = ",".join(sorted(list(participants_by_chat.get(doc_id, []))))
-            writer.writerow([doc_id, chat_room_name, participants])
+        for chat_id, chat_room_name in chat_rooms.items():
+            participants = ",".join(sorted(list(participants_by_chat.get(chat_id, []))))
+            writer.writerow([chat_id, chat_room_name, participants])

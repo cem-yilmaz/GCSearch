@@ -7,7 +7,7 @@ import SearchBar from "../components/MainView/SearchBar/SearchBar";
 
 import "./Main.css";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "http://127.0.0.1:5000/api";
 
 const Main = () => {
     const [serverStatus, setServerStatus] = useState("Checking...");
@@ -128,6 +128,36 @@ const Main = () => {
         }
     }
     
+    const handleProxSearch = async (searchQuery, range) => {
+        if (!searchQuery.trim()) {
+            setSearchResults([]);
+            console.error(`Recieved empty search query [${searchQuery}]`);
+            return;
+        }
+
+        setIsSearching(true);
+        try {
+            const response = await fetch(`${API_URL}/ProximitySearch`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    query: searchQuery,
+                    range: range
+                })
+            });
+            const data = await response.json();
+            setSearchResults(data);
+        } catch (error) {
+            console.error(`Error proxsearching for [${searchQuery}]: ${error}`);
+            setSearchResults([]);
+            setIsSearching(false);
+        } finally {
+            setIsSearching(false);
+        }
+    }
+
     return (
         <>
             <ChatList 
@@ -142,7 +172,7 @@ const Main = () => {
             />
             <div className="central-container">
                 <h1>GCSearch</h1>
-                <SearchBar onSearch={handleSearch}/>
+                <SearchBar onSearch={handleSearch} onProxSearch={handleProxSearch} />
                 <MainChatWindow 
                     messages={currentChatMessages} 
                     isLoadingChatMessages={isLoadingChatMessages} 
