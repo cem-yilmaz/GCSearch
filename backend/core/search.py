@@ -324,3 +324,115 @@ class Searcher():
         results = self.search_all_piis_in_folder(query, top_n=n)
         messages = [self.flask_get_message_data(result) for result in results]
         return messages[:n]
+    
+    def proximity_search(self, terms:list[str], positional_inverted_index:dict, n:int, top_n:int=25) -> list[tuple[int, float]]:
+        """
+        Performs a proximity search for the terms in the given positional inverted index.
+
+        Args:
+            terms (list[str]): The terms to search for.
+            positional_inverted_index (dict): The positional inverted index to search in.
+            n (int): The proximity parameter.
+            top_n (int): The number of results to return. Default is 10.
+
+        Returns:
+            (list[tuple[int, float]]) A list of the top N results for the given queries in the format `(docNo, score)`.
+        """
+
+        doc_scores = {}
+
+        postings_by_terms = {term: positional_inverted_index[term]["postings"] for term in terms if term in positional_inverted_index and "postings" in positional_inverted_index[term]} # love a good dict comprehension
+        if not postings_by_terms:
+            return []
+        
+        docs_containing_some_term = set()
+        for posting in postings_by_terms.values():
+            docs_containing_some_term.update(posting.keys())
+
+        print(f"DEBUG: Searching for {terms} in {len(docs_containing_some_term)} documents")
+        print(f"DEBUG: {docs_containing_some_term}")
+
+        for docNo in docs_containing_some_term:
+            positions_by_term = []
+            for term in terms:
+                print(f"DEBUG: Checking {term} in {docNo}")
+                if term in positional_inverted_index and str(docNo) in positional_inverted_index[term]["postings"]:
+                    positions_by_term.append(positional_inverted_index[term]["postings"][str(docNo)])
+                else:
+                    positions_by_term = []
+                    break
+            if not positions_by_term:
+                continue # avoid checking docs that don't contain all terms
+            
+            score_for_doc = 0
+            print(f"DEBUG: {positions_by_term}")
+
+            for i in range(len(positions_by_term) - 1):
+                for j in positions_by_term[i]:
+                    for k in positions_by_term[i + 1]:
+                        if abs(j - k) <= n:
+                            score_for_doc += 1
+                            
+
+            if score_for_doc > 0:
+                doc_scores[docNo] = doc_scores.get(docNo, 0) + score_for_doc
+
+        return sorted(doc_scores.items(), key=lambda x: x[1], reverse=True)[:top_n]
+    
+    def prox_search_pii(self, query:str, n:int, pii:dict, top_n:int=10) -> list[tuple[int, float]]:
+        """
+        Proximity searches a query in a given PII, returning the top N results.
+
+        Args:
+            query (str): The query to search for.
+            n (int): The proximity parameter.
+            pii (dict): The PII to search in.
+            top_n (int): The number of results to return. Default is 10.
+
+        Returns:
+            (list[tuple[int, float]]) A list of the top N results for that PII in the format `(docNo, score)`.
+        """
+        terms = self.tokeniser.tokenise(query)
+        return self.proximity_search(terms, pii, n, top_n)
+    
+    def prox_search_all_piis(self, query:str, n:int, input_dir:str="piis", top_n:int=10) -> list[tuple[str, str, float]]:
+        """
+        Performs a proximity search for all of the terms in the query in all PIIs in the given directory. Each PII returns the top N results for that PII, which is then truncated to the top N results for all PIIs.
+
+        Args:
+            query (str): The query to search for.
+            n (int): The proximity parameter for the search.
+            input_dir (str): The directory in which the PIIs are stored. Default is `piis`.
+            top_n (int): The number of results to return for each PII. Default is 10.
+
+        Returns:
+            (list[tuple[str, str, float]]) A list of the top N results for all PIIs in the format `(pii_name, docNo, score)`.
+        """
+        pii_dir = os.path.join(os.path.dirname(__file__), input_dir)
+        
+        terms = query.split() # split on whitespace by default
+        print(f"DEBUG: Proximity searching \"{query}\" ({terms}) with parameter {n} in {pii_dir}")
+        results = []
+        for pii_file in os.listdir(pii_dir):
+            if pii_file.endswith(".pii.pkl"):
+                pii_name = pii_file.split(".")[0]
+                pii = self.load_pii(pii_name)
+                top_n_results = self.prox_search_pii(query, n, pii, top_n)
+                results.extend([(pii_name, docNo, score) for docNo, score in top_n_results if top_n_results])
+        return sorted(results, key=lambda x: x[2], reverse=True)[:top_n]
+    
+    def flask_prox_search(self, query:str, n:int, top_n:int=25) -> list[str]:
+        """
+        Proximity searches for the query in all PIIs in the `piis` directory.
+
+        Args:
+            query (str): The query to search for.
+            n (int): The proximity parameter for the search.
+            top_n (int): The number of results to return. Default is 25.
+
+        Returns:
+            (list[str]) A list of the top `n` messages that match the query.
+        """
+        results = self.prox_search_all_piis(query, n, top_n=top_n)
+        messages = [self.flask_get_message_data(result) for result in results]
+        return messages[:top_n]
