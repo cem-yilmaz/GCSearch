@@ -349,11 +349,15 @@ class Searcher():
         for posting in postings_by_terms.values():
             docs_containing_some_term.update(posting.keys())
 
+        print(f"DEBUG: Searching for {terms} in {len(docs_containing_some_term)} documents")
+        print(f"DEBUG: {docs_containing_some_term}")
+
         for docNo in docs_containing_some_term:
             positions_by_term = []
             for term in terms:
-                if term in positions_by_term[term]:
-                    positions_by_term.append(positions_by_term[term])
+                print(f"DEBUG: Checking {term} in {docNo}")
+                if term in positional_inverted_index and str(docNo) in positional_inverted_index[term]["postings"]:
+                    positions_by_term.append(positional_inverted_index[term]["postings"][str(docNo)])
                 else:
                     positions_by_term = []
                     break
@@ -361,8 +365,9 @@ class Searcher():
                 continue # avoid checking docs that don't contain all terms
             
             score_for_doc = 0
+            print(f"DEBUG: {positions_by_term}")
 
-            for i in range(len(positions_by_term[0]) - 1):
+            for i in range(len(positions_by_term) - 1):
                 for j in positions_by_term[i]:
                     for k in positions_by_term[i + 1]:
                         if abs(j - k) <= n:
@@ -404,8 +409,9 @@ class Searcher():
             (list[tuple[str, str, float]]) A list of the top N results for all PIIs in the format `(pii_name, docNo, score)`.
         """
         pii_dir = os.path.join(os.path.dirname(__file__), input_dir)
-        print(f"DEBUG: Proximity searching \"{query}\" with parameter {n} in {pii_dir}")
+        
         terms = query.split() # split on whitespace by default
+        print(f"DEBUG: Proximity searching \"{query}\" ({terms}) with parameter {n} in {pii_dir}")
         results = []
         for pii_file in os.listdir(pii_dir):
             if pii_file.endswith(".pii.pkl"):

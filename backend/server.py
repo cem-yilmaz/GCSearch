@@ -215,6 +215,24 @@ def flask_GetTopNResultsFromSearch():
     print(f"DEBUG: got {len(top_n_results)} results for query \"{query}\"")
     return jsonify(top_n_results)
 
+@app.route('/api/ProximitySearch', methods=['POST'])
+def flask_ProximitySearch():
+    """
+    Performs a proximity search for a given query and range.
+
+    Args:
+        query: (str) search query
+        range: (int) range to search within
+
+    Returns:
+        results: (dict) { doc_id (int): score (int):, ... }
+    """
+    data = request.get_json()
+    query = data['query']
+    range = data['range']
+    results = searcher.flask_prox_search(query, range)
+    return jsonify(results)
+
 @app.route('/api/GetMetaChatDataFromPIIName', methods=['POST'])
 def flask_GetMetaChatDataFromPIIName():
     """
@@ -257,9 +275,7 @@ def flask_getNumChatsInGC(GC_name:str) -> int:
         reader = csv.reader(f)
         num_chats = len([row for row in reader]) - 1
         f.close()
-    return num_chats
-        
-    
+    return num_chats   
 
 def flask_getChatDataFromDocIDGivenPIIName(doc_id, pii_name):
     """
