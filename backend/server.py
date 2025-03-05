@@ -238,6 +238,7 @@ def flask_ProximitySearch():
     query = data['query']
     range = int(data['range'])
     results = searcher.flask_prox_search(query, range)
+    print(f"DEBUG: got {len(results)} results for query \"{query}\"")
     return jsonify(results)
 
 @app.route('/api/GetMetaChatDataFromPIIName', methods=['POST'])

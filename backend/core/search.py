@@ -411,6 +411,9 @@ class Searcher():
         pii_dir = os.path.join(os.path.dirname(__file__), input_dir)
         
         terms = query.split() # split on whitespace by default
+        if len(terms) < 2:
+            # silently fallback to normal search
+            return self.search_all_piis_in_folder(query, input_dir, top_n)
         print(f"DEBUG: Proximity searching \"{query}\" ({terms}) with parameter {n} in {pii_dir}")
         results = []
         for pii_file in os.listdir(pii_dir):
