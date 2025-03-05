@@ -4,7 +4,8 @@ import json
 import csv
 import re
 from pathlib import Path
-from ocr import OCR # This import looks silly just trust the plan
+#from ocr import OCR # This import looks silly just trust the plan
+# ocr is currently unused
 
 report_zip_file_errors = False # disable logging when a corrupt zip is attempted to be read
 base_dir = Path(__file__).parent # used to resolve relative paths to the script
@@ -208,11 +209,11 @@ class InstaChatlogCreator:
         Creates an `info.csv` file for a chat
         """
         internal_chat_name, display_name, participants = self.get_info_about_chat(chat_name)
+        participants = [self.make_safe_for_csv(participant) for participant in participants]
         with open(os.path.join(self.info_output_dir, f'{self.export_prefix}{internal_chat_name}.info.csv'), 'w') as f:
             writer = csv.writer(f)
             writer.writerow(['Internal chat name', 'Display name', 'Participants'])
-            writer.writerow([(internal_chat_name), self.make_safe_for_csv(display_name), '['+', '.join(self.make_safe_for_csv(participants))+']'])
-            f.close()
+            writer.writerow([internal_chat_name, self.make_safe_for_csv(display_name), '[' + ', '.join(participants) + ']'])
 
     def create_info_files_for_all_chats(self) -> None:
         """
@@ -392,35 +393,35 @@ class InstaChatlogCreator:
 
     # OCR stuff
     # OCR'ing is so expensive we may need to OCR individual chats *after* they have been chatlog'd
-    def ocr_message(self, ocr_model:OCR, GCName:str="hannah_1414358549958244", chat_docID:int=29508) -> None:
-        """
-        Updates an individual message at `chat_docID` in the chatlog `GCName` with the OCR'd text.
-        
-        **This function is currently unused.**
-
-        Args:
-            ocr_model (OCR): The OCR model to use.
-            GCName (str): The internal name of the chat.
-            chat_docID (str): The document ID of the message
-        """
-        with open(os.path.join(str(self.chatlogs_output_dir), f'{self.export_prefix}{GCName}.chatlog.csv'), 'r') as f:
-            reader = csv.reader(f)
-            rows = list(reader)
-            print(len(rows))
-            f.close()
-        matches = [row for row in rows if row[0] == str(chat_docID)]
-        if matches:
-            # we should only get one match, so for now, just take the first value
-            match = matches[0]
-        else:
-            match = None
-
-        image_path = match[11]
-        result = ocr_model.transcribe(image_path)
-        if result:
-            print(f"DEBUG: OCR successful. Replacing message {chat_docID} in chat {GCName} with OCR'd text ({result})")
-            match[3] = result
-            match[10] = True
+    # def ocr_message(self, ocr_model:OCR, GCName:str="hannah_1414358549958244", chat_docID:int=29508) -> None:
+    #     """
+    #     Updates an individual message at `chat_docID` in the chatlog `GCName` with the OCR'd text.
+    #     
+    #     **This function is currently unused.**
+# 
+    #     Args:
+    #         ocr_model (OCR): The OCR model to use.
+    #         GCName (str): The internal name of the chat.
+    #         chat_docID (str): The document ID of the message
+    #     """
+    #     with open(os.path.join(str(self.chatlogs_output_dir), f'{self.export_prefix}{GCName}.chatlog.csv'), 'r') as f:
+    #         reader = csv.reader(f)
+    #         rows = list(reader)
+    #         print(len(rows))
+    #         f.close()
+    #     matches = [row for row in rows if row[0] == str(chat_docID)]
+    #     if matches:
+    #         # we should only get one match, so for now, just take the first value
+    #         match = matches[0]
+    #     else:
+    #         match = None
+# 
+    #     image_path = match[11]
+    #     result = ocr_model.transcribe(image_path)
+    #     if result:
+    #         print(f"DEBUG: OCR successful. Replacing message {chat_docID} in chat {GCName} with OCR'd text ({result})")
+    #         match[3] = result
+    #         match[10] = True
 
     def main(self, handle_local_media:str='ignore') -> None:
         """
@@ -436,3 +437,7 @@ class InstaChatlogCreator:
         self.extract_messages_folder()
         self.create_chatlogs_and_info_for_all_chats(handle_local_media)
         #TODO: tell the user they can safely delete the raw_messages folder IF they choose not to render images
+
+def generate_chatlog():
+    icc = InstaChatlogCreator()
+    icc.main()

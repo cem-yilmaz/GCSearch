@@ -12,7 +12,7 @@ output_file = os.path.join(BASE_PATH,  "out", "chatlogs", f"{platform}__{chatnam
 
 chat_rooms_file = os.path.join(BASE_PATH,  "out", "info", f"{platform}__{chatname}.info.csv")
 
-input(f"We will be reading from {input_file} and writing to {output_file} and {chat_rooms_file}. Press Enter to continue.")
+#input(f"We will be reading from {input_file} and writing to {output_file} and {chat_rooms_file}. Press Enter to continue.")
 
 # line chatroom pattern：capture [LINE] chatname pattern
 chat_id_pattern = re.compile(r"\[LINE\]\s+(.*)")
