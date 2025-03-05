@@ -5,15 +5,32 @@ from core.search import Searcher
 import os
 import csv
 import sys
+import argparse
 
 csv.field_size_limit(sys.maxsize)
 
 app = Flask(__name__)
 CORS(app)#, resources={r"/api/*": {"origins": "*"}})
 
-language = "traditional_chinese"
+currently_supported_languages = [
+    "english", # English
+    "chinese", # Simplified Chinese
+    "traditional_chinese", # Traditional Chinese
+    "turkish" # Turkish
+]
+
+parser = argparse.ArgumentParser(description='GCSearch Server')
+parser.add_argument('--language', type=str, default='english', help='Language for the searcher')
+args = parser.parse_args()
+if args.language not in currently_supported_languages:
+    print(f"Unsupported language: {args.language}. Currently supported languages are: {', '.join(currently_supported_languages)}")
+    language = "english"
+    print(f"Defaulting to {language}")
+else:
+    language = args.language
 
 searcher = Searcher(language=language)
+print(f"GCSearch Server Initialised with language: {language}")
 
 currently_supported_platforms = [
     "instagram",
@@ -22,12 +39,6 @@ currently_supported_platforms = [
     "line"
 ]
 
-currently_supported_languages = [
-    "en", # English
-    "zh-cn", # Simplified Chinese
-    "zh-tw", # Traditional Chinese
-    "turkish" # Turkish
-]
 import chardet
 
 def detect_encoding(file_path, sample_size=10000):
