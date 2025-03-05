@@ -46,7 +46,12 @@ npm install
 Follow the respective guides for [exporting your own data](https://github.com/cem-yilmaz/GCSearch/wiki#how-to-export-your-data-from-the-supported-apps).
 Place these exports inside of `backend/core/export/[instagram][whatsapp][wechat][line]`, depending on which platform you got these from.
 
-(TODO: make a script to assist with creation of `csv` chatlogs and PIIs)
+Navigate to `backend/`, and run
+```
+python3 setup.py
+```
+and follow the automated data parser.
+
 
 The script allows you to parse exports of data in a single language. Note that mixed languages are not well supported; you should choose the tokenisation method that makes sense for each of them.
 
