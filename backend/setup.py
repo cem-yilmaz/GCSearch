@@ -51,20 +51,20 @@ def run_chatlog_creator(choice:str):
     print(f"Running chatlog creator for {platform}")
     if platform == "instagram":
         from core.export_parsers.insta_chatlog_creator import generate_chatlog
-        #generate_chatlog()
-        print(f"This is where we'd run the chatlog creator for {platform}")
+        generate_chatlog()
+        #print(f"This is where we'd run the chatlog creator for {platform}")
     elif platform == "whatsapp":
         from core.export_parsers.whatsapp_to_chatlog import generate_chatlog
-        #generate_chatlog()
-        print(f"This is where we'd run the chatlog creator for {platform}")
+        generate_chatlog()
+        #print(f"This is where we'd run the chatlog creator for {platform}")
     elif platform == "line":
         from core.export_parsers.LINE_to_chatlog import generate_chatlog
-        #generate_chatlog()
-        print(f"This is where we'd run the chatlog creator for {platform}")
+        generate_chatlog()
+        #print(f"This is where we'd run the chatlog creator for {platform}")
     elif platform == "wechat":
         from core.export_parsers.WeChat_to_chatlog import generate_chatlog
-        #generate_chatlog()
-        print(f"This is where we'd run the chatlog creator for {platform}")
+        generate_chatlog()
+        #print(f"This is where we'd run the chatlog creator for {platform}")
     else:
         raise Exception(f"Error when running chatlog creator for \"{platform}\"")
     
@@ -105,7 +105,7 @@ def run_pii_creator(language:str):
     from core.pii import PIIConstructor
     p = PIIConstructor(language=language)
     print(f"Running PII creator for {language}")
-    #p.create_piis_from_folder()
+    p.create_piis_from_folder()
 
 run_pii_creator(language)
 print()

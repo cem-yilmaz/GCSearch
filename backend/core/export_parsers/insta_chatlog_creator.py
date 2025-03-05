@@ -209,11 +209,11 @@ class InstaChatlogCreator:
         Creates an `info.csv` file for a chat
         """
         internal_chat_name, display_name, participants = self.get_info_about_chat(chat_name)
+        participants = [self.make_safe_for_csv(participant) for participant in participants]
         with open(os.path.join(self.info_output_dir, f'{self.export_prefix}{internal_chat_name}.info.csv'), 'w') as f:
             writer = csv.writer(f)
             writer.writerow(['Internal chat name', 'Display name', 'Participants'])
-            writer.writerow([(internal_chat_name), self.make_safe_for_csv(display_name), '['+', '.join(self.make_safe_for_csv(participants))+']'])
-            f.close()
+            writer.writerow([internal_chat_name, self.make_safe_for_csv(display_name), '[' + ', '.join(participants) + ']'])
 
     def create_info_files_for_all_chats(self) -> None:
         """
