@@ -232,7 +232,7 @@ def flask_ProximitySearch():
     """
     data = request.get_json()
     query = data['query']
-    range = data['range']
+    range = int(data['range'])
     results = searcher.flask_prox_search(query, range)
     return jsonify(results)
 
