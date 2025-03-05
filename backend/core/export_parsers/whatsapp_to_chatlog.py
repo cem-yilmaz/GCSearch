@@ -46,7 +46,7 @@ class WhatsappChatlogCreator:
             date_str, time_str, sender, message = match.groups()
             try:
                 dt = datetime.strptime(f"{date_str} {time_str}", "%d/%m/%Y %H:%M:%S")
-                unix_time = int(dt.timestamp())  # Convert to Unix timestamp
+                unix_time = int(dt.timestamp()) * 1000  # Convert to Unix timestamp
             except ValueError:
                 unix_time = 0  # Handle invalid timestamps
 

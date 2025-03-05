@@ -23,6 +23,7 @@ currently_supported_languages = [
     "en", # English
     "zh-cn", # Simplified Chinese
     "zh-tw", # Traditional Chinese
+    "turkish" # Turkish
 ]
 import chardet
 
@@ -30,17 +31,14 @@ def detect_encoding(file_path, sample_size=10000):
     """
     Detects the encoding of a file by reading a small sample.
     """
-    with open(file_path, "rb") as f:
-        raw_data = f.read(sample_size)
-    result = chardet.detect(raw_data)
-    return result['encoding'] if language == "turkish" else "utf-8-sig"
-
-@app.route('/api/isAlive', methods=['GET'])
-def flask_isAlive():
-    """
-    Simple function to check if the server is alive.
-    """
-    return jsonify({"status": "alive"})
+    try:
+        with open(file_path, "rb") as f:
+            raw_data = f.read(sample_size)
+        result = chardet.detect(raw_data)
+        return result['encoding'] if language == "turkish" else "utf-8-sig"
+    except Exception as e:
+        print(f"Error detecting encoding: {e}")
+        return "utf-8-sig"
 
 def flask_getAllParsedChats() -> list[str]:
     """
