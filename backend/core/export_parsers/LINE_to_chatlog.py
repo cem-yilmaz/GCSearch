@@ -60,16 +60,15 @@ def detect_remote_url(message):
     media_urls = [url for url in urls if url.lower().endswith(media_extensions)]
     return media_urls[0] if media_urls else "FALSE"
 
-
-def generate_chatlog():  
+def generate_chatlog():
     messages = []
     current_date = None
-    last_sender = None
     last_message_index = None  
-    chat_counter = 0
-    message_counter=0
+    message_counter = 0  # message docNo
+    all_participants = set()  # participants
 
-    chat_rooms = {} 
+    chat_room_name = chatname
+
     with open(input_file, "r", encoding="utf-8") as file:
         lines = file.readlines()
 
@@ -78,16 +77,11 @@ def generate_chatlog():
         if not line:
             continue
 
-        
-        chat_match = chat_id_pattern.match(line)
-        if chat_match:
-            chat_room_name = chat_match.group(1).strip()
-            chat_counter += 1
-            chat_rooms[chat_counter] = chat_room_name
-            participants_by_chat[chat_counter] = set()
+        # [LINE] pattern
+        if chat_id_pattern.match(line):
             continue
 
-        
+        # select data_line
         is_date_line = False
         for date_pattern in date_patterns:
             date_match = date_pattern.match(line)
@@ -101,7 +95,7 @@ def generate_chatlog():
             continue  
 
         message_added = False
-        skipped_line = False  # 
+        skipped_line = False  # if no sender, then skip
 
         for time_pattern in time_patterns:
             time_match = time_pattern.match(line)
@@ -123,15 +117,13 @@ def generate_chatlog():
                     break
 
                 unix_time = convert_to_unix(current_date, time_str)
-                unix_time *= 1000
                 if unix_time is not None:
                     is_media = detect_media(message)
                     remote_url = detect_remote_url(message) 
-                    local_url = ""  # 
+                    local_url = ""  # LINE does not support local_url
 
-                    # 
                     message_counter += 1
-                    doc_id = message_counter
+                    doc_id = str(message_counter) # docNo
 
                     messages.append([
                         doc_id, unix_time, sender, message,
@@ -144,8 +136,9 @@ def generate_chatlog():
                         local_url,  # local_url
                         remote_url  # remote_url
                     ])
-                    
-                    last_sender = sender
+
+                    # save all senders
+                    all_participants.add(sender)
                     last_message_index = len(messages) - 1
                     message_added = True
                 break  
@@ -156,7 +149,7 @@ def generate_chatlog():
         if last_message_index is not None:
             messages[last_message_index][3] += " " + line
 
-    
+    # save chatlog CSV
     with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow([
@@ -165,10 +158,11 @@ def generate_chatlog():
         ])
         writer.writerows(messages)
 
-    #  CSV
+    # save info CSV
     with open(chat_rooms_file, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(["display_name", "internal_chat_name", "participants"])
-        for chat_id, chat_room_name in chat_rooms.items():
-            participants = ",".join(sorted(list(participants_by_chat.get(chat_id, []))))
-            writer.writerow([chat_id, chat_room_name, participants])
+        participants_str = ",".join(sorted(list(all_participants)))
+        writer.writerow([chatname, chatname, participants_str])
+
+
