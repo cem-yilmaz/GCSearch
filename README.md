@@ -47,15 +47,23 @@ Follow the respective guides for [exporting your own data](https://github.com/ce
 Place these exports inside of `backend/core/export/[instagram][whatsapp][wechat][line]`, depending on which platform you got these from.
 
 (TODO: make a script to assist with creation of `csv` chatlogs and PIIs)
+
+The script allows you to parse exports of data in a single language. Note that mixed languages are not well supported; you should choose the tokenisation method that makes sense for each of them.
+
+A good example of this would be (hypothetically) English and French, which would tokenise using the English method, which would not generalise too poorly.
+
+A bad example of this would be English and Chinese, which would not generalise well at all, and would likely result in poor search results.
 # Running
 Once you have installed the prerequisite files, and downloaded and parsed your data, open up two terminals.
 **It is recommended to start the server _first_ to avoid any syncing issues**.
 ## Backend Server
 The backend server manages all the internal search engine operations. Navigate to `backend/` and run
 ```
-python3 server.py
+python3 server.py --language [language]
 ```
 This should start the server on port `5000`. This is where the frontend will expect results from, so if this isn't the case, check your ports (or change the frontend code **if you know what you are doing!**)
+
+Supported Languages are `english`, `chinese` (simplified), `traditional_chinese`, and `turkish`. If you do not specify a language, or insert a mistake, the default is `english`. You can only run the backend in one language at a time.
 ## Frontend Interface
 The frontend handles the actual interface for viewing the chats. Navigate to `frontend/GCSearch` and run
 ```
