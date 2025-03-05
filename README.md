@@ -72,5 +72,11 @@ npm run dev
 This should start the interface on [localhost:5174](http://localhost:5174/). Naviagate to this to start searching!
 
 (By default, "_Instagram_" is the selected platform. If you do not see your chats, consider selecting the platform again.)
+### MacOS
+GCSearch on MacOS currently has issues with CORS, as the server and frontend are ran on differerent ports. This issue is not present on any other platform. As a workaround, if GCSearch fails due to CORS errors, open a terminal and run
+```
+open -n -a /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --args --user-data-dir="/tmp/chrome_dev_test" --disable-web-security
+```
+This will open a new instance of Chrome without strict CORS checking enabled. **Please do not use this instance for any other web activity, as it is not reccomended for general online browsing**.
 # Credits
 todo
