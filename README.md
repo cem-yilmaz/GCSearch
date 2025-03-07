@@ -4,7 +4,7 @@ GCSearch intelligently formats your raw data exports from your favourite messagi
 
 GCSearch is powered by a robust ⚗️ Flask backend, and brought to life with a custom-built bespoke ⚛️ React frontend.
 
-GCSearch was created for **The University of Edinburgh's** "_Text Technologies for Data Science_" (TTDS) course in 2025, and was the collaborative effort of Cem, Ray, Layla, Yu-Shin, and Efe. Please see [Credits](#Credits) for further details.
+GCSearch was created for **The University of Edinburgh's** "_Text Technologies for Data Science_" (TTDS) course in 2025, and was the collaborative effort of Cem, Ray, Layla, Yu-Shin, and Efe.
 ## Supported Messaging Platforms
 - **Instagram**
 - **WhatsApp**
@@ -83,5 +83,3 @@ GCSearch on MacOS currently has issues with CORS, as the server and frontend are
 open -n -a /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --args --user-data-dir="/tmp/chrome_dev_test" --disable-web-security
 ```
 This will open a new instance of Chrome without strict CORS checking enabled. **Please do not use this instance for any other web activity, as it is not reccomended for general online browsing**.
-# Credits
-todo
