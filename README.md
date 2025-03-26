@@ -3,8 +3,6 @@
 GCSearch intelligently formats your raw data exports from your favourite messaging apps, and allows you to search through **all** of them, returning the most relevant results. All data and processing is performed _locally_, meaning you can safely browse your own data at your own leisure.
 
 GCSearch is powered by a robust ⚗️ Flask backend, and brought to life with a custom-built bespoke ⚛️ React frontend.
-
-GCSearch was created for **The University of Edinburgh's** "_Text Technologies for Data Science_" (TTDS) course in 2025, and was the collaborative effort of Cem, Ray, Layla, Yu-Shin, and Efe.
 ## Supported Messaging Platforms
 - **Instagram**
 - **WhatsApp**
